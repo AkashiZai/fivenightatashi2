@@ -1,0 +1,1850 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Five Nights at Ashi 2</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-drag: none; }
+  body {
+    background: #000;
+    color: #fff;
+    font-family: 'Courier New', Courier, monospace;
+    overflow: hidden;
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  #game-wrap {
+    position: relative;
+    width: 1280px;
+    height: 720px;
+    max-width: 100vw;
+    max-height: 100vh;
+    aspect-ratio: 16 / 9;
+    background: #000;
+    overflow: hidden;
+    box-shadow: 0 0 60px rgba(0,0,0,0.95);
+    border: 1px solid #181818;
+  }
+  .crt-overlay {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 90;
+    background:
+      repeating-linear-gradient(0deg, rgba(0,0,0,0.18) 0px, rgba(0,0,0,0.18) 1px, transparent 1px, transparent 3px),
+      radial-gradient(circle at center, transparent 58%, rgba(0,0,0,0.75) 100%);
+  }
+  #static-canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 45;
+    opacity: 0;
+    mix-blend-mode: screen;
+  }
+
+  /* TITLE SCREEN */
+  #title-screen {
+    position: absolute;
+    inset: 0;
+    z-index: 60;
+    background: #000;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 42px 64px;
+  }
+  #title-bg-char {
+    position: absolute;
+    right: 40px;
+    bottom: -20px;
+    height: 730px;
+    opacity: 0.78;
+    filter: contrast(1.45) brightness(0.68);
+    pointer-events: none;
+  }
+  .title-header { position: relative; z-index: 5; }
+  .title-header h1 {
+    font-size: 50px;
+    line-height: 1.06;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    text-shadow: 3px 3px 0 #000, 0 0 20px rgba(255,80,30,0.45);
+  }
+  .stars-row {
+    margin-top: 10px;
+    font-size: 34px;
+    color: #ffd700;
+    letter-spacing: 8px;
+  }
+  .menu-list {
+    position: relative;
+    z-index: 5;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .menu-btn {
+    font-size: 28px;
+    color: #ddd;
+    cursor: pointer;
+    letter-spacing: 2px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: fit-content;
+  }
+  .menu-btn:hover { color: #fff; transform: translateX(6px); text-shadow: 0 0 10px #fff; }
+  .menu-btn .arrow { visibility: hidden; }
+  .menu-btn:hover .arrow { visibility: visible; }
+  .night-select-row { display: flex; gap: 8px; margin-top: 4px; flex-wrap: wrap; }
+  .night-pill {
+    background: rgba(255,255,255,0.08);
+    border: 1px solid #555;
+    color: #ccc;
+    padding: 5px 11px;
+    font-family: inherit;
+    font-size: 13px;
+    cursor: pointer;
+  }
+  .night-pill:hover { background: #fff; color: #000; }
+  .switch-game-btn {
+    display: inline-block;
+    margin-top: 8px;
+    padding: 8px 16px;
+    background: #1a0d05;
+    border: 2px solid #ff7722;
+    color: #ffaa55;
+    text-decoration: none;
+    font-size: 15px;
+    font-weight: bold;
+    width: fit-content;
+  }
+  .switch-game-btn:hover { background: #ff7722; color: #000; }
+  .title-footer {
+    position: relative;
+    z-index: 5;
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+    color: #777;
+  }
+
+  /* CUSTOM NIGHT MODAL */
+  #custom-night-modal {
+    position: absolute;
+    inset: 0;
+    z-index: 75;
+    background: rgba(0,0,0,0.96);
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 18px 24px;
+  }
+  .cn-grid {
+    display: flex;
+    gap: 10px 12px;
+    margin: 12px 0 16px;
+    flex-wrap: wrap;
+    justify-content: center;
+    max-width: 1180px;
+  }
+  .cn-card {
+    width: 176px;
+    background: #0d0d0d;
+    border: 2px solid #444;
+    padding: 7px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .cn-card.withered {
+    border-color: #773322;
+    background: #120908;
+  }
+  .cn-card img {
+    width: 104px;
+    height: 108px;
+    object-fit: cover;
+    object-position: top center;
+    border: 1px solid #333;
+    background: #050508;
+    margin-bottom: 5px;
+  }
+  .cn-name { font-size: 13px; font-weight: bold; letter-spacing: 0.5px; text-align: center; }
+  .cn-role { font-size: 10px; color: #888; margin: 2px 0 5px; text-align: center; height: 22px; line-height: 1.1; }
+  .cn-controls { display: flex; align-items: center; gap: 8px; }
+  .cn-btn {
+    width: 26px; height: 26px; background: #222; border: 1px solid #666;
+    color: #fff; font-size: 16px; cursor: pointer; font-family: inherit;
+  }
+  .cn-btn:hover { background: #fff; color: #000; }
+  .cn-val { font-size: 20px; width: 32px; text-align: center; font-weight: bold; }
+  .cn-actions { display: flex; gap: 14px; }
+  .cn-action-btn {
+    padding: 8px 22px; font-size: 18px; font-family: inherit;
+    background: #111; border: 2px solid #fff; color: #fff; cursor: pointer;
+  }
+  .cn-action-btn:hover { background: #fff; color: #000; }
+
+  /* OVERLAYS */
+  .fullscreen-overlay {
+    position: absolute; inset: 0; z-index: 70; background: #000;
+    display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center;
+  }
+  #newspaper-card {
+    width: 780px; background: #d8d2c5; color: #111; padding: 34px 44px;
+    border: 4px double #222; font-family: Georgia, serif; text-align: left; transform: rotate(-1deg);
+  }
+  #newspaper-card h2 {
+    font-size: 44px; border-bottom: 3px solid #111; padding-bottom: 6px; margin-bottom: 14px; text-align: center;
+  }
+  .np-body { display: flex; gap: 22px; align-items: center; }
+  .np-body img {
+    width: 190px; height: 210px; object-fit: cover; object-position: top;
+    filter: grayscale(0.85) contrast(1.35); border: 2px solid #222;
+  }
+
+  /* THE FNAF 2 OFFICE (1600x720 pan inside 1280x720) */
+  #office-viewport { position: absolute; inset: 0; overflow: hidden; z-index: 10; }
+  #office-world { position: absolute; top: 0; left: 0; width: 1600px; height: 720px; will-change: transform; }
+  #office-bg { position: absolute; top: 0; left: 0; width: 1600px; height: 720px; object-fit: cover; pointer-events: none; }
+  #office-desk {
+    position: absolute;
+    left: 525px;
+    bottom: 0;
+    width: 650px;
+    pointer-events: none;
+    z-index: 4;
+  }
+  /* Vent Light Buttons in Office World */
+  .vent-btn {
+    position: absolute;
+    width: 66px;
+    height: 92px;
+    background: rgba(30, 35, 45, 0.85);
+    border: 3px solid #889;
+    border-radius: 6px;
+    color: #fff;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: bold;
+    cursor: pointer;
+    z-index: 6;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    box-shadow: 0 0 15px rgba(0,0,0,0.8);
+  }
+  .vent-btn .bulb {
+    width: 24px; height: 24px; border-radius: 50%;
+    background: #445; border: 2px solid #99a;
+  }
+  .vent-btn.active .bulb {
+    background: #99e6ff;
+    box-shadow: 0 0 16px #99e6ff;
+  }
+  #btn-left-vent { left: 90px; top: 310px; }
+  #btn-right-vent { left: 1440px; top: 310px; }
+
+  /* Center Hallway Click Area for Flashlight */
+  #hallway-hitbox {
+    position: absolute;
+    left: 600px;
+    top: 120px;
+    width: 350px;
+    height: 390px;
+    cursor: pointer;
+    z-index: 5;
+  }
+
+  /* FREDDY MASK OVERLAY */
+  #mask-overlay {
+    position: absolute;
+    inset: -20px;
+    z-index: 25;
+    pointer-events: none;
+    transform: translateY(-105%);
+    transition: transform 0.22s cubic-bezier(0.2, 0.9, 0.3, 1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  #mask-overlay.on {
+    transform: translateY(0%);
+    animation: maskBreathe 1.4s ease-in-out infinite alternate;
+  }
+  #mask-overlay img {
+    width: 1340px;
+    height: 760px;
+    object-fit: fill;
+  }
+  @keyframes maskBreathe {
+    0% { transform: translateY(0px) scale(1.01); }
+    100% { transform: translateY(10px) scale(1.03); }
+  }
+
+  /* Office Blackout Flicker Overlay (When Animatronic enters Office!) */
+  #blackout-flicker {
+    position: absolute;
+    inset: 0;
+    background: #000;
+    z-index: 22;
+    pointer-events: none;
+    opacity: 0;
+  }
+
+  /* CAMERA MONITOR VIEW */
+  #cam-screen {
+    position: absolute;
+    inset: 0;
+    z-index: 30;
+    background: #000;
+    display: none;
+    overflow: hidden;
+  }
+  #cam-feed-wrap {
+    position: absolute;
+    top: 0; left: 0; width: 1600px; height: 720px;
+    transform: translateX(-160px);
+  }
+  #cam-feed-img {
+    width: 1600px; height: 720px; object-fit: cover;
+  }
+  .cam-border-frame {
+    position: absolute; inset: 16px; border: 2px solid rgba(255,255,255,0.45);
+    pointer-events: none; z-index: 35;
+  }
+  .cam-rec-dot {
+    position: absolute; top: 38px; left: 44px; display: flex; align-items: center;
+    gap: 12px; font-size: 24px; z-index: 36;
+  }
+  .red-circle {
+    width: 22px; height: 22px; border-radius: 50%; background: #e00;
+    box-shadow: 0 0 10px #f00; animation: blink 1s infinite;
+  }
+  @keyframes blink { 0%, 49% { opacity: 1; } 50%, 100% { opacity: 0; } }
+  #cam-room-title {
+    position: absolute; top: 38px; right: 56px; font-size: 28px;
+    letter-spacing: 2px; z-index: 36; text-shadow: 2px 2px 0 #000;
+  }
+
+  /* WIND UP MUSIC BOX UI (On CAM 11 Prize Corner) */
+  #music-box-ui {
+    position: absolute;
+    bottom: 120px;
+    left: 280px;
+    z-index: 38;
+    display: none;
+    align-items: center;
+    gap: 18px;
+  }
+  #wind-btn {
+    padding: 16px 24px;
+    background: #222;
+    border: 3px solid #fff;
+    color: #fff;
+    font-family: inherit;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    line-height: 1.25;
+    text-align: center;
+    box-shadow: 0 0 20px rgba(0,0,0,0.9);
+  }
+  #wind-btn:active, #wind-btn.winding {
+    background: #44aa22;
+    border-color: #aaff88;
+  }
+  #music-circle-canvas {
+    background: rgba(0,0,0,0.65);
+    border-radius: 50%;
+  }
+
+  /* FNaF 2 Camera Map (12 Cameras) */
+  #cam-map-container {
+    position: absolute;
+    bottom: 58px;
+    right: 34px;
+    width: 470px;
+    height: 350px;
+    z-index: 38;
+    background: rgba(0, 0, 0, 0.45);
+    border: 1px solid rgba(255,255,255,0.25);
+  }
+  .cam-btn {
+    position: absolute;
+    width: 58px;
+    height: 34px;
+    background: #2b2b2b;
+    border: 2px solid #aaa;
+    color: #fff;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: bold;
+    line-height: 1.05;
+    cursor: pointer;
+    padding: 2px 4px;
+    text-align: left;
+  }
+  .cam-btn.active {
+    background: #55aa22;
+    border-color: #fff;
+  }
+  .radar-tags {
+    position: absolute; top: -13px; right: 0; display: flex; gap: 2px; pointer-events: none;
+  }
+  .r-dot {
+    font-size: 10px; padding: 0 3px; border-radius: 2px; font-weight: bold; color: #000;
+  }
+
+  /* HUD LAYER */
+  #hud-layer {
+    position: absolute; inset: 0; pointer-events: none; z-index: 40; display: none;
+  }
+  .hud-top-left {
+    position: absolute; top: 24px; left: 34px; text-shadow: 2px 2px 0 #000;
+  }
+  .battery-box {
+    display: flex; align-items: center; gap: 8px; font-size: 20px; margin-bottom: 8px;
+  }
+  .bat-shell {
+    width: 110px; height: 26px; border: 2px solid #fff; padding: 3px; display: flex; gap: 3px;
+  }
+  .bat-bar { flex: 1; background: #2ecc40; }
+  .hud-top-right {
+    position: absolute; top: 24px; right: 38px; text-align: right; text-shadow: 2px 2px 0 #000;
+  }
+  #hud-time { font-size: 42px; font-weight: bold; }
+  #hud-night { font-size: 22px; }
+  #music-warning {
+    margin-top: 8px;
+    font-size: 20px;
+    font-weight: bold;
+    color: #ff4136;
+    display: none;
+    animation: blink 0.35s infinite;
+  }
+
+  /* Bottom Dual Bars: Red = Freddy Mask, White = Camera Monitor (Exact FNaF 2 UI!) */
+  #mask-toggle-bar {
+    position: absolute;
+    bottom: 10px;
+    left: 48px;
+    width: 540px;
+    height: 40px;
+    background: rgba(200, 30, 30, 0.35);
+    border: 2px solid rgba(255, 90, 90, 0.75);
+    color: #ffcccc;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    letter-spacing: 4px;
+    cursor: pointer;
+    pointer-events: auto;
+  }
+  #mask-toggle-bar:hover { background: rgba(230, 40, 40, 0.6); color: #fff; }
+
+  #monitor-toggle-bar {
+    position: absolute;
+    bottom: 10px;
+    right: 48px;
+    width: 540px;
+    height: 40px;
+    background: rgba(180, 180, 180, 0.25);
+    border: 2px solid rgba(255, 255, 255, 0.65);
+    color: #eee;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    letter-spacing: 4px;
+    cursor: pointer;
+    pointer-events: auto;
+  }
+  #monitor-toggle-bar:hover { background: rgba(255, 255, 255, 0.45); color: #fff; }
+
+  #flashlight-btn {
+    position: absolute;
+    bottom: 62px;
+    left: 48px;
+    padding: 8px 18px;
+    background: rgba(255, 220, 80, 0.2);
+    border: 2px solid #ffdc00;
+    color: #ffdc00;
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: bold;
+    cursor: pointer;
+    pointer-events: auto;
+  }
+  #flashlight-btn.active { background: #ffdc00; color: #000; }
+
+  #dev-toolbar {
+    position: absolute; top: 24px; left: 260px; display: flex; gap: 8px; pointer-events: auto;
+  }
+  .tool-pill {
+    background: rgba(0,0,0,0.75); border: 1px solid #555; color: #aaa;
+    font-family: inherit; font-size: 12px; padding: 5px 10px; cursor: pointer;
+  }
+  .tool-pill:hover, .tool-pill.active { border-color: #fff; color: #fff; }
+  #ai-debug-box {
+    position: absolute; top: 58px; left: 260px; background: rgba(0,0,0,0.85);
+    border: 1px solid #444; padding: 8px 12px; font-size: 12px; line-height: 1.45;
+    color: #0f0; display: none; pointer-events: none;
+  }
+
+  /* JUMPSCARE LAYER */
+  #jumpscare-layer {
+    position: absolute; inset: 0; z-index: 80; background: #000;
+    display: none; align-items: center; justify-content: center; overflow: hidden;
+  }
+  #jumpscare-bg {
+    position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0.45;
+  }
+  #jumpscare-char {
+    position: relative; height: 820px; z-index: 2;
+    filter: contrast(1.5) brightness(0.95);
+    animation: scareShake 0.045s infinite alternate;
+  }
+  @keyframes scareShake {
+    0% { transform: scale(1.18) translate(-18px, 12px) rotate(-4deg); }
+    50% { transform: scale(1.44) translate(22px, -16px) rotate(4deg); }
+    100% { transform: scale(1.58) translate(-12px, -22px) rotate(-3deg); }
+  }
+</style>
+</head>
+<body>
+
+<div id="game-wrap">
+  <div class="crt-overlay"></div>
+  <canvas id="static-canvas" width="640" height="360"></canvas>
+
+  <!-- TITLE SCREEN -->
+  <div id="title-screen">
+    <img id="title-bg-char" src="assets2/sprites/foxy.png" alt="Fire Ashi">
+    <div class="title-header">
+      <h1>Five<br>Nights<br>at<br>Ashi 2</h1>
+      <div class="stars-row" id="title-stars"></div>
+    </div>
+
+    <div class="menu-list">
+      <div class="menu-btn" onclick="startNewGame()">
+        <span class="arrow">&gt;&gt;</span> New Game
+      </div>
+      <div class="menu-btn" onclick="continueGame()">
+        <span class="arrow">&gt;&gt;</span> Continue <span id="continue-night-label" style="font-size:18px;color:#888;margin-left:8px;">(Night 1)</span>
+      </div>
+      <div class="menu-btn" onclick="startSelectedNight(6)">
+        <span class="arrow">&gt;&gt;</span> 6th Night
+      </div>
+      <div class="menu-btn" onclick="openCustomNight()">
+        <span class="arrow">&gt;&gt;</span> Custom Night
+      </div>
+
+      <div style="margin-top:6px;font-size:12px;color:#888;">QUICK SELECT NIGHT (FNAF 2 MECHANICS: MASK + FLASHLIGHT + MUSIC BOX):</div>
+      <div class="night-select-row">
+        <button class="night-pill" onclick="startSelectedNight(1)">Night 1</button>
+        <button class="night-pill" onclick="startSelectedNight(2)">Night 2</button>
+        <button class="night-pill" onclick="startSelectedNight(3)">Night 3</button>
+        <button class="night-pill" onclick="startSelectedNight(4)">Night 4</button>
+        <button class="night-pill" onclick="startSelectedNight(5)">Night 5</button>
+        <button class="night-pill" onclick="startSelectedNight(6)">Night 6</button>
+        <button class="night-pill" onclick="openCustomNight()">Night 7 (Custom)</button>
+      </div>
+
+      <a href="https://github.com/AkashiZai/fivenightatashi" target="_blank" class="switch-game-btn">&#x25C0; Five Nights at Ashi 1</a>
+    </div>
+
+    <div class="title-footer">
+      <span>Flashlight: [Z]/[Ctrl] | Mask: [D] | Vent Lights: [Q]/[E] | Monitor: [Space]/[S] | Wind Box: [W]</span>
+      <span>© Five Nights at Ashi 2 — Grand Re-Opening Edition</span>
+    </div>
+  </div>
+
+  <!-- CUSTOM NIGHT MODAL -->
+  <div id="custom-night-modal">
+    <h2 style="font-size:28px;letter-spacing:3px;">CUSTOM NIGHT — 11 ANIMATRONICS (TOYS + WITHERED PART 1)</h2>
+    <div class="cn-grid">
+      <div class="cn-card">
+        <img src="assets2/sprites/freddy.png" alt="Dark Ashi">
+        <div class="cn-name">DARK ASHI</div>
+        <div class="cn-role">Toy Freddy — Hallway → Mask</div>
+        <div class="cn-controls">
+          <button class="cn-btn" onclick="adjCustomAI('freddy', -1)">&lt;</button>
+          <div class="cn-val" id="cn-freddy">20</div>
+          <button class="cn-btn" onclick="adjCustomAI('freddy', 1)">&gt;</button>
+        </div>
+      </div>
+      <div class="cn-card">
+        <img src="assets2/sprites/bonnie.png" alt="Tribal Ashi">
+        <div class="cn-name">TRIBAL ASHI</div>
+        <div class="cn-role">Toy Bonnie — R-Vent → Mask</div>
+        <div class="cn-controls">
+          <button class="cn-btn" onclick="adjCustomAI('bonnie', -1)">&lt;</button>
+          <div class="cn-val" id="cn-bonnie">20</div>
+          <button class="cn-btn" onclick="adjCustomAI('bonnie', 1)">&gt;</button>
+        </div>
+      </div>
+      <div class="cn-card">
+        <img src="assets2/sprites/chica.png" alt="Sport Ashi">
+        <div class="cn-name">SPORT ASHI</div>
+        <div class="cn-role">Toy Chica — L-Vent → Mask</div>
+        <div class="cn-controls">
+          <button class="cn-btn" onclick="adjCustomAI('chica', -1)">&lt;</button>
+          <div class="cn-val" id="cn-chica">20</div>
+          <button class="cn-btn" onclick="adjCustomAI('chica', 1)">&gt;</button>
+        </div>
+      </div>
+      <div class="cn-card">
+        <img src="assets2/sprites/foxy.png" alt="Fire Ashi">
+        <div class="cn-name">FIRE ASHI</div>
+        <div class="cn-role">Hallway — Strobe Flashlight!</div>
+        <div class="cn-controls">
+          <button class="cn-btn" onclick="adjCustomAI('foxy', -1)">&lt;</button>
+          <div class="cn-val" id="cn-foxy">20</div>
+          <button class="cn-btn" onclick="adjCustomAI('foxy', 1)">&gt;</button>
+        </div>
+      </div>
+      <div class="cn-card">
+        <img src="assets2/sprites/buff.png" alt="Buff Ashi">
+        <div class="cn-name">BUFF ASHI</div>
+        <div class="cn-role">Parts/Service → Office Mask</div>
+        <div class="cn-controls">
+          <button class="cn-btn" onclick="adjCustomAI('buff', -1)">&lt;</button>
+          <div class="cn-val" id="cn-buff">20</div>
+          <button class="cn-btn" onclick="adjCustomAI('buff', 1)">&gt;</button>
+        </div>
+      </div>
+      <div class="cn-card">
+        <img src="assets2/sprites/puppet.png" alt="Monchhichi">
+        <div class="cn-name">MONCHHICHI</div>
+        <div class="cn-role">CAM 11 Prize Corner Music Box</div>
+        <div class="cn-controls">
+          <button class="cn-btn" onclick="adjCustomAI('puppet', -1)">&lt;</button>
+          <div class="cn-val" id="cn-puppet">20</div>
+          <button class="cn-btn" onclick="adjCustomAI('puppet', 1)">&gt;</button>
+        </div>
+      </div>
+
+      <!-- 5 WITHERED ANIMATRONICS FROM FIVE NIGHTS AT ASHI 1 -->
+      <div class="cn-card withered">
+        <img src="assets2/sprites/w_freddy.png" alt="Withered Ashi">
+        <div class="cn-name" style="color:#ff9977;">WITHERED ASHI</div>
+        <div class="cn-role">FNaA 1 Freddy — CAM 08 → Hall</div>
+        <div class="cn-controls">
+          <button class="cn-btn" onclick="adjCustomAI('w_freddy', -1)">&lt;</button>
+          <div class="cn-val" id="cn-w_freddy">20</div>
+          <button class="cn-btn" onclick="adjCustomAI('w_freddy', 1)">&gt;</button>
+        </div>
+      </div>
+      <div class="cn-card withered">
+        <img src="assets2/sprites/w_bonnie.png" alt="Withered Dress">
+        <div class="cn-name" style="color:#ff9977;">WITHERED DRESS</div>
+        <div class="cn-role">FNaA 1 Bonnie — CAM 08 → L-Vent</div>
+        <div class="cn-controls">
+          <button class="cn-btn" onclick="adjCustomAI('w_bonnie', -1)">&lt;</button>
+          <div class="cn-val" id="cn-w_bonnie">20</div>
+          <button class="cn-btn" onclick="adjCustomAI('w_bonnie', 1)">&gt;</button>
+        </div>
+      </div>
+      <div class="cn-card withered">
+        <img src="assets2/sprites/w_chica.png" alt="Withered Pizza">
+        <div class="cn-name" style="color:#ff9977;">WITHERED PIZZA</div>
+        <div class="cn-role">FNaA 1 Chica — CAM 08 → R-Vent</div>
+        <div class="cn-controls">
+          <button class="cn-btn" onclick="adjCustomAI('w_chica', -1)">&lt;</button>
+          <div class="cn-val" id="cn-w_chica">20</div>
+          <button class="cn-btn" onclick="adjCustomAI('w_chica', 1)">&gt;</button>
+        </div>
+      </div>
+      <div class="cn-card withered">
+        <img src="assets2/sprites/w_foxy.png" alt="Withered Bikini">
+        <div class="cn-name" style="color:#ff9977;">WITHERED BIKINI</div>
+        <div class="cn-role">FNaA 1 Foxy — CAM 12 → R-Vent</div>
+        <div class="cn-controls">
+          <button class="cn-btn" onclick="adjCustomAI('w_foxy', -1)">&lt;</button>
+          <div class="cn-val" id="cn-w_foxy">20</div>
+          <button class="cn-btn" onclick="adjCustomAI('w_foxy', 1)">&gt;</button>
+        </div>
+      </div>
+      <div class="cn-card withered">
+        <img src="assets2/sprites/w_golden.png" alt="Withered Golden">
+        <div class="cn-name" style="color:#ffd700;">WITHERED GOLDEN</div>
+        <div class="cn-role">FNaA 1 Golden — Hall/Office Apparition</div>
+        <div class="cn-controls">
+          <button class="cn-btn" onclick="adjCustomAI('w_golden', -1)">&lt;</button>
+          <div class="cn-val" id="cn-w_golden">20</div>
+          <button class="cn-btn" onclick="adjCustomAI('w_golden', 1)">&gt;</button>
+        </div>
+      </div>
+    </div>
+    <div class="cn-actions">
+      <button class="cn-action-btn" onclick="closeCustomNight()">BACK</button>
+      <button class="cn-action-btn" onclick="setAllCustomAI(0)">ALL 0</button>
+      <button class="cn-action-btn" onclick="setAllCustomAI(10)">ALL 10</button>
+      <button class="cn-action-btn" onclick="setAllCustomAI(20)">11/20 GOLDEN FREDDY</button>
+      <button class="cn-action-btn" onclick="launchCustomNight()">READY &gt;&gt;</button>
+    </div>
+  </div>
+
+  <!-- NEWSPAPER OVERLAY -->
+  <div id="newspaper-screen" class="fullscreen-overlay" onclick="skipNewspaper()">
+    <div id="newspaper-card">
+      <h2>GRAND RE-OPENING!</h2>
+      <div class="np-body">
+        <img src="assets2/sprites/foxy.png" alt="Grand Reopening">
+        <div class="np-text">
+          <h3>NEW &amp; IMPROVED ASHI'S PIZZA!</h3>
+          <p>Vintage pizzeria given new life! Come meet the brand new faces of fun—equipped with advanced facial recognition and mobility.</p>
+          <p><b>Night guard needed (12 AM – 6 AM):</b> No doors in the new office! You will be provided with your very own <b>Freddy Fazbear Head Mask</b>, a <b>Flashlight</b>, and a remote <b>Music Box</b> in Prize Corner (CAM 11).</p>
+        </div>
+      </div>
+      <div style="text-align:right;font-size:13px;margin-top:10px;color:#444;">(Click anywhere to continue)</div>
+    </div>
+  </div>
+
+  <!-- NIGHT INTRO -->
+  <div id="night-intro-screen" class="fullscreen-overlay">
+    <div style="font-size:48px;letter-spacing:3px;margin-bottom:12px;">12:00 AM</div>
+    <div id="night-intro-text" style="font-size:42px;letter-spacing:2px;">1st Night</div>
+  </div>
+
+  <!-- 6 AM VICTORY -->
+  <div id="victory-screen" class="fullscreen-overlay">
+    <div id="victory-clock" style="font-size:92px;font-weight:bold;letter-spacing:6px;">5:00 AM</div>
+    <div id="victory-sub" style="font-size:24px;color:#aaa;margin-top:20px;opacity:0;transition:opacity 1s;"></div>
+  </div>
+
+  <!-- GAME OVER -->
+  <div id="gameover-screen" class="fullscreen-overlay" onclick="returnToMenu()">
+    <img id="gameover-img" src="assets2/sprites/foxy.png" style="height:430px;filter:contrast(1.5) brightness(0.6);margin-bottom:16px;" alt="Game Over">
+    <div style="font-size:54px;color:#d00;letter-spacing:6px;text-shadow:0 0 20px #f00;">GAME OVER</div>
+    <div id="gameover-reason" style="font-size:20px;color:#bbb;margin-top:10px;"></div>
+    <div style="font-size:15px;color:#777;margin-top:22px;">Click anywhere to return to Title Screen</div>
+  </div>
+
+  <!-- THE OFFICE VIEWPORT -->
+  <div id="office-viewport">
+    <div id="office-world">
+      <img id="office-bg" src="assets2/cams/office_normal.jpg" alt="Office 2">
+      <img id="office-desk" src="assets2/bg/desk2.gif" alt="Desk">
+
+      <!-- Left & Right Air Vent Light Buttons -->
+      <div id="btn-left-vent" class="vent-btn" onclick="toggleVentLight('left')" title="Left Vent Light [Q]">
+        <div class="bulb"></div>
+        <span>L-VENT<br>[Q]</span>
+      </div>
+      <div id="btn-right-vent" class="vent-btn" onclick="toggleVentLight('right')" title="Right Vent Light [E]">
+        <div class="bulb"></div>
+        <span>R-VENT<br>[E]</span>
+      </div>
+
+      <!-- Click Hallway to shine Flashlight -->
+      <div id="hallway-hitbox" onmousedown="setFlashlight(true)" onmouseup="setFlashlight(false)" onmouseleave="setFlashlight(false)" title="Hold to shine Flashlight down Hallway [Z / Ctrl]"></div>
+    </div>
+
+    <!-- Office Blackout Flicker Overlay -->
+    <div id="blackout-flicker"></div>
+
+    <!-- Freddy Fazbear Mask Overlay -->
+    <div id="mask-overlay">
+      <img src="assets2/bg/mask.png" alt="Freddy Mask">
+    </div>
+  </div>
+
+  <!-- SECURITY CAMERA MONITOR -->
+  <div id="cam-screen">
+    <div id="cam-feed-wrap">
+      <img id="cam-feed-img" src="assets2/cams/cam09_all.jpg" alt="Camera">
+    </div>
+    <div class="cam-border-frame"></div>
+    <div class="cam-rec-dot">
+      <div class="red-circle"></div>
+      <span>CAM FEED</span>
+    </div>
+    <div id="cam-room-title">CAM 09 - Show Stage</div>
+
+    <!-- Prize Corner (CAM 11) Wind Up Music Box UI -->
+    <div id="music-box-ui">
+      <canvas id="music-circle-canvas" width="76" height="76"></canvas>
+      <button id="wind-btn"
+        onmousedown="startWindingBox()"
+        onmouseup="stopWindingBox()"
+        onmouseleave="stopWindingBox()"
+        ontouchstart="startWindingBox()"
+        ontouchend="stopWindingBox()">
+        CLICK AND HOLD<br>TO WIND UP MUSIC BOX [W]
+      </button>
+    </div>
+
+    <!-- FNaF 2 12-Camera Map -->
+    <div id="cam-map-container">
+      <svg width="470" height="350" viewBox="0 0 470 350" fill="none" stroke="#fff" stroke-width="1.6" style="opacity:0.75;">
+        <!-- Show Stage (09) & Game Area (10) & Prize Corner (11) & Kids Cove (12) -->
+        <rect x="275" y="18" width="95" height="45"/>
+        <rect x="255" y="63" width="125" height="95"/>
+        <rect x="380" y="68" width="75" height="55"/>
+        <rect x="380" y="132" width="75" height="55"/>
+        <!-- Main Hall (07) & Parts/Service (08) -->
+        <rect x="145" y="75" width="110" height="55"/>
+        <rect x="45" y="45" width="85" height="65"/>
+        <!-- Central Corridor & Party Rooms 1-4 (01, 02, 03, 04) -->
+        <rect x="135" y="140" width="65" height="125"/>
+        <rect x="45" y="145" width="75" height="52"/>
+        <rect x="215" y="145" width="75" height="52"/>
+        <rect x="45" y="210" width="75" height="52"/>
+        <rect x="215" y="210" width="75" height="52"/>
+        <!-- Air Vents (05, 06) & Office -->
+        <rect x="65" y="275" width="60" height="45"/>
+        <rect x="210" y="275" width="60" height="45"/>
+        <rect x="140" y="272" width="56" height="62" stroke-width="2.5"/>
+        <text x="153" y="308" fill="#fff" stroke="none" font-size="12" font-family="monospace">YOU</text>
+      </svg>
+
+      <button class="cam-btn" id="btn-01" style="left:52px;top:218px;"  onclick="selectCamera('01')">CAM<br>01<div class="radar-tags" id="rad-01"></div></button>
+      <button class="cam-btn" id="btn-02" style="left:222px;top:218px;" onclick="selectCamera('02')">CAM<br>02<div class="radar-tags" id="rad-02"></div></button>
+      <button class="cam-btn" id="btn-03" style="left:52px;top:152px;"  onclick="selectCamera('03')">CAM<br>03<div class="radar-tags" id="rad-03"></div></button>
+      <button class="cam-btn" id="btn-04" style="left:222px;top:152px;" onclick="selectCamera('04')">CAM<br>04<div class="radar-tags" id="rad-04"></div></button>
+      <button class="cam-btn" id="btn-05" style="left:66px;top:282px;"  onclick="selectCamera('05')">CAM<br>05<div class="radar-tags" id="rad-05"></div></button>
+      <button class="cam-btn" id="btn-06" style="left:212px;top:282px;" onclick="selectCamera('06')">CAM<br>06<div class="radar-tags" id="rad-06"></div></button>
+      <button class="cam-btn" id="btn-07" style="left:168px;top:85px;"  onclick="selectCamera('07')">CAM<br>07<div class="radar-tags" id="rad-07"></div></button>
+      <button class="cam-btn" id="btn-08" style="left:58px;top:60px;"   onclick="selectCamera('08')">CAM<br>08<div class="radar-tags" id="rad-08"></div></button>
+      <button class="cam-btn active" id="btn-09" style="left:295px;top:22px;" onclick="selectCamera('09')">CAM<br>09<div class="radar-tags" id="rad-09"></div></button>
+      <button class="cam-btn" id="btn-10" style="left:295px;top:98px;"  onclick="selectCamera('10')">CAM<br>10<div class="radar-tags" id="rad-10"></div></button>
+      <button class="cam-btn" id="btn-11" style="left:392px;top:78px;"  onclick="selectCamera('11')">CAM<br>11<div class="radar-tags" id="rad-11"></div></button>
+      <button class="cam-btn" id="btn-12" style="left:392px;top:142px;" onclick="selectCamera('12')">CAM<br>12<div class="radar-tags" id="rad-12"></div></button>
+    </div>
+  </div>
+
+  <!-- HUD LAYER -->
+  <div id="hud-layer">
+    <div class="hud-top-left">
+      <div class="battery-box">
+        <span>FLASHLIGHT</span>
+        <div class="bat-shell" id="bat-bars">
+          <div class="bat-bar"></div>
+          <div class="bat-bar"></div>
+          <div class="bat-bar"></div>
+          <div class="bat-bar"></div>
+        </div>
+      </div>
+      <div id="office-alert" style="font-size:16px;color:#ffdc00;"></div>
+    </div>
+
+    <div id="dev-toolbar">
+      <button class="tool-pill" id="btn-speed" onclick="toggleSpeedMode()">Speed: 1x (70s/hr)</button>
+      <button class="tool-pill" id="btn-radar" onclick="toggleRadar()">AI Radar: OFF</button>
+      <a href="index.html" class="tool-pill" style="text-decoration:none;">Switch to FNaA 1</a>
+    </div>
+    <div id="ai-debug-box"></div>
+
+    <div class="hud-top-right">
+      <div id="hud-time">12 AM</div>
+      <div id="hud-night">Night 1</div>
+      <div id="music-warning">&#x26A0; WIND MUSIC BOX (CAM 11)!</div>
+    </div>
+
+    <button id="flashlight-btn"
+      onmousedown="setFlashlight(true)"
+      onmouseup="setFlashlight(false)"
+      onmouseleave="setFlashlight(false)">
+      &#x1F526; FLASHLIGHT [HOLD Z / CTRL]
+    </button>
+
+    <!-- Bottom Dual Action Bars -->
+    <div id="mask-toggle-bar" onclick="toggleMask()">
+      &#x25B2; &#x25BC; FREDDY MASK [D]
+    </div>
+    <div id="monitor-toggle-bar" onclick="toggleMonitor()">
+      &#x25B2; &#x25BC; CAMERA MONITOR [SPACE]
+    </div>
+  </div>
+
+  <!-- JUMPSCARE LAYER -->
+  <div id="jumpscare-layer">
+    <img id="jumpscare-bg" src="assets2/cams/office_normal.jpg" alt="BG">
+    <img id="jumpscare-char" src="assets2/sprites/foxy.png" alt="Jumpscare">
+  </div>
+</div>
+
+<script>
+// ============================================================================
+// FIVE NIGHTS AT ASHI 2 — AUTHENTIC FNAF 2 ENGINE (MASK + FLASHLIGHT + MUSIC BOX)
+// ============================================================================
+
+const CAM_NAMES = {
+  '01': 'CAM 01 - Party Room 1',
+  '02': 'CAM 02 - Party Room 2',
+  '03': 'CAM 03 - Party Room 3',
+  '04': 'CAM 04 - Party Room 4',
+  '05': 'CAM 05 - Left Air Vent',
+  '06': 'CAM 06 - Right Air Vent',
+  '07': 'CAM 07 - Main Hall',
+  '08': 'CAM 08 - Parts / Service',
+  '09': 'CAM 09 - Show Stage',
+  '10': 'CAM 10 - Game Area',
+  '11': 'CAM 11 - Prize Corner (Monchhichi)',
+  '12': "CAM 12 - Kids' Cove"
+};
+
+const NIGHT_STARTING_AI = {
+  1: { freddy: 2, bonnie: 3, chica: 3, foxy: 2, buff: 0, puppet: 3, w_freddy: 1, w_bonnie: 1, w_chica: 1, w_foxy: 2, w_golden: 0 },
+  2: { freddy: 3, bonnie: 5, chica: 4, foxy: 5, buff: 2, puppet: 6, w_freddy: 2, w_bonnie: 3, w_chica: 3, w_foxy: 5, w_golden: 0 },
+  3: { freddy: 4, bonnie: 5, chica: 5, foxy: 8, buff: 6, puppet: 9, w_freddy: 6, w_bonnie: 8, w_chica: 7, w_foxy: 7, w_golden: 2 },
+  4: { freddy: 6, bonnie: 7, chica: 7, foxy: 11, buff: 9, puppet: 12, w_freddy: 8, w_bonnie: 10, w_chica: 10, w_foxy: 10, w_golden: 4 },
+  5: { freddy: 9, bonnie: 9, chica: 9, foxy: 14, buff: 12, puppet: 15, w_freddy: 11, w_bonnie: 12, w_chica: 12, w_foxy: 12, w_golden: 7 },
+  6: { freddy: 12, bonnie: 12, chica: 12, foxy: 17, buff: 15, puppet: 18, w_freddy: 15, w_bonnie: 15, w_chica: 15, w_foxy: 15, w_golden: 12 }
+};
+
+let audioCtx = null;
+function ensureAudio() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+}
+
+function playSound(type) {
+  ensureAudio();
+  const now = audioCtx.currentTime;
+  if (type === 'blip') {
+    const osc = audioCtx.createOscillator(), g = audioCtx.createGain();
+    osc.type = 'square'; osc.frequency.setValueAtTime(1250, now);
+    g.gain.setValueAtTime(0.08, now); g.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+    osc.connect(g); g.connect(audioCtx.destination); osc.start(now); osc.stop(now + 0.08);
+  } else if (type === 'mask') {
+    const osc = audioCtx.createOscillator(), g = audioCtx.createGain();
+    osc.type = 'triangle'; osc.frequency.setValueAtTime(180, now); osc.frequency.exponentialRampToValueAtTime(65, now + 0.22);
+    g.gain.setValueAtTime(0.25, now); g.gain.exponentialRampToValueAtTime(0.01, now + 0.22);
+    osc.connect(g); g.connect(audioCtx.destination); osc.start(now); osc.stop(now + 0.22);
+  } else if (type === 'wind') {
+    const osc = audioCtx.createOscillator(), g = audioCtx.createGain();
+    osc.type = 'sine'; osc.frequency.setValueAtTime(680, now); osc.frequency.setValueAtTime(920, now + 0.04);
+    g.gain.setValueAtTime(0.1, now); g.gain.exponentialRampToValueAtTime(0.005, now + 0.09);
+    osc.connect(g); g.connect(audioCtx.destination); osc.start(now); osc.stop(now + 0.09);
+  } else if (type === 'vent') {
+    [90, 65].forEach((f, i) => {
+      const osc = audioCtx.createOscillator(), g = audioCtx.createGain();
+      osc.type = 'square'; osc.frequency.setValueAtTime(f, now + i * 0.14);
+      g.gain.setValueAtTime(0.28, now + i * 0.14); g.gain.exponentialRampToValueAtTime(0.01, now + i * 0.14 + 0.12);
+      osc.connect(g); g.connect(audioCtx.destination); osc.start(now + i * 0.14); osc.stop(now + i * 0.14 + 0.12);
+    });
+  } else if (type === 'hall_alarm') {
+    // Classic FNaF 2 hallway warning synth pulse when someone is in the hallway/vent!
+    const osc = audioCtx.createOscillator(), g = audioCtx.createGain();
+    osc.type = 'sawtooth'; osc.frequency.setValueAtTime(310, now); osc.frequency.setValueAtTime(275, now + 0.15);
+    g.gain.setValueAtTime(0.11, now); g.gain.exponentialRampToValueAtTime(0.005, now + 0.32);
+    osc.connect(g); g.connect(audioCtx.destination); osc.start(now); osc.stop(now + 0.32);
+  } else if (type === 'jumpscare') {
+    [210, 315, 440, 630, 890, 1240].forEach(freq => {
+      const osc = audioCtx.createOscillator(), g = audioCtx.createGain();
+      osc.type = 'sawtooth'; osc.frequency.setValueAtTime(freq, now);
+      osc.frequency.linearRampToValueAtTime(freq * 1.22, now + 0.45);
+      g.gain.setValueAtTime(0.18, now); g.gain.exponentialRampToValueAtTime(0.01, now + 1.45);
+      osc.connect(g); g.connect(audioCtx.destination); osc.start(now); osc.stop(now + 1.45);
+    });
+  } else if (type === 'chime6am') {
+    [[659.25, 0], [523.25, 0.55], [587.33, 1.1], [392.00, 1.65]].forEach(([freq, t]) => {
+      const osc = audioCtx.createOscillator(), g = audioCtx.createGain();
+      osc.type = 'sine'; osc.frequency.setValueAtTime(freq, now + t);
+      g.gain.setValueAtTime(0.22, now + t); g.gain.exponentialRampToValueAtTime(0.002, now + t + 0.9);
+      osc.connect(g); g.connect(audioCtx.destination); osc.start(now + t); osc.stop(now + t + 0.9);
+    });
+  }
+}
+
+let savedNight = parseInt(localStorage.getItem('fnaa2_saved_night') || '1', 10);
+let starsUnlocked = JSON.parse(localStorage.getItem('fnaa2_stars') || '{"s1":false,"s2":false,"s3":false}');
+let customAI = {
+  freddy: 20, bonnie: 20, chica: 20, foxy: 20, buff: 20, puppet: 20,
+  w_freddy: 20, w_bonnie: 20, w_chica: 20, w_foxy: 20, w_golden: 20
+};
+
+let G = {
+  running: false,
+  night: 1,
+  hour: 0,
+  nightSeconds: 0,
+  hourLengthSec: 70, // FNaF 2 is 70s per hour (or 25s in Fast Mode)
+  fastMode: false,
+  radarOn: false,
+
+  battery: 100.0,
+  officePanX: -160,
+  mouseX: 640,
+
+  maskOn: false,
+  monitorOpen: false,
+  currentCam: '09',
+  flashlightOn: false,
+  leftVentLight: false,
+  rightVentLight: false,
+
+  // Music Box (0..100%)
+  musicBox: 100.0,
+  windingBox: false,
+  windSoundTick: 0,
+  puppetEscaped: false,
+  puppetAttackTimer: 0,
+
+  // Office Blackout Confrontation (Toy or Withered Animatronic enters Office!)
+  officeIntruder: null,
+  intruderTimer: 0,
+  intruderReaction: 0,
+
+  // Foxy Hallway Stun / Patience
+  foxyInHall: false,
+  foxyPatience: 0,
+  foxyFlashHits: 0,
+
+  ai: {
+    freddy: 0, bonnie: 0, chica: 0, foxy: 0, buff: 0, puppet: 0,
+    w_freddy: 0, w_bonnie: 0, w_chica: 0, w_foxy: 0, w_golden: 0
+  },
+  pos: {
+    freddy:   '09', // 09 -> 10 -> HALL -> OFFICE
+    bonnie:   '09', // 09 -> 03 -> 04 -> 02 -> 06 -> VENT_R
+    chica:    '09', // 09 -> 07 -> 04 -> 01 -> 05 -> VENT_L
+    buff:     '08', // 08 -> 07 -> 03 -> 01 -> 05 -> VENT_L or HALL -> OFFICE
+    foxy:     '08', // 08 -> 12 -> HALL
+    w_freddy: '08', // 08 -> 07 -> 03 -> HALL -> OFFICE
+    w_bonnie: '08', // 08 -> 07 -> 01 -> 05 -> VENT_L -> OFFICE
+    w_chica:  '08', // 08 -> 04 -> 02 -> 06 -> VENT_R -> OFFICE
+    w_foxy:   '12', // 12 -> 02 -> 06 -> VENT_R -> OFFICE
+    w_golden: 'NONE' // Apparition in HALL or OFFICE
+  },
+  timers: {
+    freddy: 0, bonnie: 0, chica: 0, foxy: 0, buff: 0,
+    w_freddy: 0, w_bonnie: 0, w_chica: 0, w_foxy: 0, w_golden: 0
+  }
+};
+
+function updateTitleUI() {
+  document.getElementById('continue-night-label').textContent = `(Night ${Math.min(5, savedNight)})`;
+  let s = '';
+  if (starsUnlocked.s1) s += '★ ';
+  if (starsUnlocked.s2) s += '★ ';
+  if (starsUnlocked.s3) s += '★';
+  document.getElementById('title-stars').textContent = s;
+}
+updateTitleUI();
+
+// Title Screen Glitch (Both Part 2 & Withered Part 1!)
+setInterval(() => {
+  if (document.getElementById('title-screen').style.display === 'none') return;
+  const img = document.getElementById('title-bg-char');
+  const pool = ['foxy', 'buff', 'bonnie', 'freddy', 'chica', 'puppet', 'w_freddy', 'w_bonnie', 'w_chica', 'w_foxy', 'w_golden'];
+  if (Math.random() < 0.25) {
+    const pick = pool[Math.floor(Math.random() * pool.length)];
+    img.src = `assets2/sprites/${pick}.png`;
+  } else {
+    img.src = 'assets2/sprites/foxy.png';
+  }
+}, 200);
+
+// Static Canvas
+const staticCanvas = document.getElementById('static-canvas');
+const sCtx = staticCanvas.getContext('2d');
+setInterval(() => {
+  const w = 160, h = 90;
+  const imgData = sCtx.createImageData(w, h);
+  const d = imgData.data;
+  for (let i = 0; i < d.length; i += 4) {
+    const v = (Math.random() * 255) | 0;
+    d[i] = v; d[i+1] = v; d[i+2] = v; d[i+3] = 170;
+  }
+  sCtx.putImageData(imgData, 0, 0);
+  sCtx.drawImage(staticCanvas, 0, 0, w, h, 0, 0, staticCanvas.width, staticCanvas.height);
+}, 55);
+
+let newspaperTimeout = null;
+function startNewGame() {
+  ensureAudio(); playSound('blip');
+  savedNight = 1;
+  localStorage.setItem('fnaa2_saved_night', '1');
+  updateTitleUI();
+  document.getElementById('title-screen').style.display = 'none';
+  document.getElementById('newspaper-screen').style.display = 'flex';
+  newspaperTimeout = setTimeout(skipNewspaper, 4500);
+}
+function skipNewspaper() {
+  if (newspaperTimeout) { clearTimeout(newspaperTimeout); newspaperTimeout = null; }
+  document.getElementById('newspaper-screen').style.display = 'none';
+  startSelectedNight(1);
+}
+function continueGame() {
+  ensureAudio();
+  startSelectedNight(Math.min(5, savedNight));
+}
+function openCustomNight() {
+  ensureAudio(); playSound('blip');
+  document.getElementById('custom-night-modal').style.display = 'flex';
+}
+function closeCustomNight() {
+  playSound('blip');
+  document.getElementById('custom-night-modal').style.display = 'none';
+}
+function adjCustomAI(who, d) {
+  playSound('blip');
+  customAI[who] = Math.max(0, Math.min(20, customAI[who] + d));
+  document.getElementById('cn-' + who).textContent = customAI[who];
+}
+function setAllCustomAI(v) {
+  playSound('blip');
+  Object.keys(customAI).forEach(k => {
+    customAI[k] = v;
+    document.getElementById('cn-' + k).textContent = v;
+  });
+}
+function launchCustomNight() {
+  document.getElementById('custom-night-modal').style.display = 'none';
+  startSelectedNight(7);
+}
+
+function startSelectedNight(n) {
+  ensureAudio(); playSound('blip');
+  document.getElementById('title-screen').style.display = 'none';
+  document.getElementById('gameover-screen').style.display = 'none';
+  document.getElementById('victory-screen').style.display = 'none';
+
+  G.night = n;
+  G.hour = 0;
+  G.nightSeconds = 0;
+  G.battery = 100.0;
+  G.maskOn = false;
+  G.monitorOpen = false;
+  G.currentCam = '09';
+  G.flashlightOn = false;
+  G.leftVentLight = false;
+  G.rightVentLight = false;
+
+  G.musicBox = 100.0;
+  G.windingBox = false;
+  G.puppetEscaped = false;
+  G.puppetAttackTimer = 0;
+
+  G.officeIntruder = null;
+  G.intruderTimer = 0;
+  G.intruderReaction = 0;
+  G.foxyInHall = false;
+  G.foxyPatience = 0;
+  G.foxyFlashHits = 0;
+
+  G.pos = {
+    freddy: '09', bonnie: '09', chica: '09', buff: '08', foxy: '08',
+    w_freddy: '08', w_bonnie: '08', w_chica: '08', w_foxy: '12', w_golden: 'NONE'
+  };
+  G.timers = {
+    freddy: 0, bonnie: 0, chica: 0, foxy: 0, buff: 0,
+    w_freddy: 0, w_bonnie: 0, w_chica: 0, w_foxy: 0, w_golden: 0
+  };
+  G.ai = (n === 7) ? { ...customAI } : { ...NIGHT_STARTING_AI[n] };
+
+  document.getElementById('mask-overlay').classList.remove('on');
+  document.getElementById('cam-screen').style.display = 'none';
+  document.getElementById('blackout-flicker').style.opacity = '0';
+  staticCanvas.style.opacity = '0.06';
+
+  const ord = ['1st', '2nd', '3rd', '4th', '5th', '6th', '7th'][n - 1];
+  document.getElementById('night-intro-text').textContent = `${ord} Night`;
+  const intro = document.getElementById('night-intro-screen');
+  intro.style.display = 'flex';
+
+  setTimeout(() => {
+    intro.style.display = 'none';
+    document.getElementById('hud-layer').style.display = 'block';
+    G.running = true;
+    updateOfficeVisuals();
+    updateHUD();
+  }, 2000);
+}
+
+// Mouse & Keyboard Input
+document.getElementById('game-wrap').addEventListener('mousemove', e => {
+  const rect = e.currentTarget.getBoundingClientRect();
+  G.mouseX = ((e.clientX - rect.left) / rect.width) * 1280;
+});
+
+window.addEventListener('keydown', e => {
+  if (!G.running) return;
+  const k = e.key.toLowerCase();
+  if (k === 'z' || e.key === 'Control') setFlashlight(true);
+  else if (k === 'd') toggleMask();
+  else if (k === ' ' || k === 's') { e.preventDefault(); toggleMonitor(); }
+  else if (k === 'q') toggleVentLight('left');
+  else if (k === 'e') toggleVentLight('right');
+  else if (k === 'w' && G.monitorOpen && G.currentCam === '11') startWindingBox();
+});
+
+window.addEventListener('keyup', e => {
+  if (!G.running) return;
+  const k = e.key.toLowerCase();
+  if (k === 'z' || e.key === 'Control') setFlashlight(false);
+  else if (k === 'w') stopWindingBox();
+});
+
+function setFlashlight(state) {
+  if (!G.running || G.maskOn || G.battery <= 0) {
+    G.flashlightOn = false;
+  } else {
+    if (state && !G.flashlightOn) {
+      playSound('blip');
+      // Strobe stun against Fire Foxy in the Central Hallway!
+      if (!G.monitorOpen && G.pos.foxy === 'HALL') {
+        G.foxyFlashHits++;
+        G.foxyPatience = Math.max(0, G.foxyPatience - 1.8);
+        if (G.foxyFlashHits >= 5) {
+          G.pos.foxy = '08';
+          G.foxyFlashHits = 0;
+          G.foxyPatience = 0;
+        }
+      }
+      if (!G.monitorOpen && (
+        G.pos.foxy === 'HALL' || G.pos.freddy === 'HALL' || G.pos.buff === 'HALL' ||
+        G.pos.chica === 'HALL' || G.pos.w_freddy === 'HALL' || G.pos.w_bonnie === 'HALL' || G.pos.w_golden === 'HALL'
+      )) {
+        playSound('hall_alarm');
+      }
+    }
+    G.flashlightOn = state;
+  }
+  document.getElementById('flashlight-btn').classList.toggle('active', G.flashlightOn);
+  updateOfficeVisuals();
+}
+
+function toggleVentLight(side) {
+  if (!G.running || G.maskOn || G.monitorOpen || G.officeIntruder) return;
+  playSound('blip');
+  if (side === 'left') {
+    G.leftVentLight = !G.leftVentLight;
+    if (G.leftVentLight) G.rightVentLight = false;
+    if (G.leftVentLight && (G.pos.chica === 'VENT_L' || G.pos.buff === 'VENT_L' || G.pos.w_bonnie === 'VENT_L')) playSound('hall_alarm');
+  } else {
+    G.rightVentLight = !G.rightVentLight;
+    if (G.rightVentLight) G.leftVentLight = false;
+    if (G.rightVentLight && (G.pos.bonnie === 'VENT_R' || G.pos.w_chica === 'VENT_R' || G.pos.w_foxy === 'VENT_R')) playSound('hall_alarm');
+  }
+  document.getElementById('btn-left-vent').classList.toggle('active', G.leftVentLight);
+  document.getElementById('btn-right-vent').classList.toggle('active', G.rightVentLight);
+  updateOfficeVisuals();
+}
+
+function toggleMask() {
+  if (!G.running || G.monitorOpen) return;
+  G.maskOn = !G.maskOn;
+  if (G.maskOn) {
+    G.flashlightOn = false;
+    G.leftVentLight = false;
+    G.rightVentLight = false;
+    document.getElementById('btn-left-vent').classList.remove('active');
+    document.getElementById('btn-right-vent').classList.remove('active');
+    document.getElementById('flashlight-btn').classList.remove('active');
+    // Putting on the mask also banishes Withered Golden Ashi from the Hallway!
+    if (G.pos.w_golden === 'HALL') G.pos.w_golden = 'NONE';
+  }
+  playSound('mask');
+  document.getElementById('mask-overlay').classList.toggle('on', G.maskOn);
+  updateOfficeVisuals();
+}
+
+function toggleMonitor() {
+  if (!G.running || G.maskOn || G.officeIntruder) return;
+  G.monitorOpen = !G.monitorOpen;
+  playSound('blip');
+  if (G.monitorOpen) {
+    G.leftVentLight = false;
+    G.rightVentLight = false;
+    document.getElementById('btn-left-vent').classList.remove('active');
+    document.getElementById('btn-right-vent').classList.remove('active');
+    document.getElementById('cam-screen').style.display = 'block';
+    document.getElementById('music-box-ui').style.display = (G.currentCam === '11') ? 'flex' : 'none';
+    staticCanvas.style.opacity = '0.22';
+    updateCameraFeed();
+  } else {
+    stopWindingBox();
+    document.getElementById('cam-screen').style.display = 'none';
+    staticCanvas.style.opacity = '0.06';
+  }
+  updateOfficeVisuals();
+}
+
+function selectCamera(camId) {
+  if (!G.running || !G.monitorOpen) return;
+  G.currentCam = camId;
+  stopWindingBox();
+  playSound('blip');
+  document.querySelectorAll('.cam-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('btn-' + camId).classList.add('active');
+  document.getElementById('cam-room-title').textContent = CAM_NAMES[camId];
+  document.getElementById('music-box-ui').style.display = (camId === '11') ? 'flex' : 'none';
+  updateCameraFeed();
+}
+
+function startWindingBox() {
+  if (!G.running || !G.monitorOpen || G.currentCam !== '11' || G.puppetEscaped) return;
+  G.windingBox = true;
+  document.getElementById('wind-btn').classList.add('winding');
+}
+function stopWindingBox() {
+  G.windingBox = false;
+  document.getElementById('wind-btn').classList.remove('winding');
+}
+
+function updateOfficeVisuals() {
+  const bg = document.getElementById('office-bg');
+  const alertEl = document.getElementById('office-alert');
+
+  if (G.officeIntruder) {
+    bg.src = `assets2/cams/office_inside_${G.officeIntruder}.jpg`;
+    alertEl.textContent = G.maskOn ? '🎭 MASK ON — HOLD STILL UNTIL THEY LEAVE!' : '⚠️ PUT ON YOUR FREDDY MASK [D] NOW!!';
+    return;
+  }
+
+  alertEl.textContent = (G.pos.foxy === 'HALL') ? '🔥 FIRE ASHI IN HALLWAY! STROBE FLASHLIGHT [Z]!' : '';
+
+  if (!G.monitorOpen && G.flashlightOn && G.battery > 0) {
+    if (G.pos.foxy === 'HALL' && G.pos.freddy === 'HALL') bg.src = 'assets2/cams/office_hall_foxy_freddy.jpg';
+    else if (G.pos.foxy === 'HALL') bg.src = 'assets2/cams/office_hall_foxy.jpg';
+    else if (G.pos.w_golden === 'HALL') bg.src = 'assets2/cams/office_hall_w_golden.jpg';
+    else if (G.pos.w_freddy === 'HALL') bg.src = 'assets2/cams/office_hall_w_freddy.jpg';
+    else if (G.pos.w_bonnie === 'HALL') bg.src = 'assets2/cams/office_hall_w_bonnie.jpg';
+    else if (G.pos.freddy === 'HALL') bg.src = 'assets2/cams/office_hall_freddy.jpg';
+    else if (G.pos.buff === 'HALL') bg.src = 'assets2/cams/office_hall_buff.jpg';
+    else if (G.pos.chica === 'HALL') bg.src = 'assets2/cams/office_hall_chica.jpg';
+    else bg.src = 'assets2/cams/office_hall_empty.jpg';
+  } else if (G.leftVentLight) {
+    if (G.pos.w_bonnie === 'VENT_L') bg.src = 'assets2/cams/office_left_w_bonnie.jpg';
+    else if (G.pos.chica === 'VENT_L') bg.src = 'assets2/cams/office_left_chica.jpg';
+    else if (G.pos.buff === 'VENT_L') bg.src = 'assets2/cams/office_left_buff.jpg';
+    else bg.src = 'assets2/cams/office_left_empty.jpg';
+  } else if (G.rightVentLight) {
+    if (G.pos.w_chica === 'VENT_R') bg.src = 'assets2/cams/office_right_w_chica.jpg';
+    else if (G.pos.w_foxy === 'VENT_R') bg.src = 'assets2/cams/office_right_w_foxy.jpg';
+    else if (G.pos.bonnie === 'VENT_R') bg.src = 'assets2/cams/office_right_bonnie.jpg';
+    else bg.src = 'assets2/cams/office_right_empty.jpg';
+  } else {
+    bg.src = 'assets2/cams/office_normal.jpg';
+  }
+}
+
+function updateCameraFeed() {
+  if (!G.monitorOpen) return;
+  const img = document.getElementById('cam-feed-img');
+  const c = G.currentCam;
+
+  if (c === '01') {
+    if (G.pos.w_bonnie === '01') img.src = 'assets2/cams/cam01_w_bonnie.jpg';
+    else if (G.pos.chica === '01') img.src = 'assets2/cams/cam01_chica.jpg';
+    else if (G.pos.buff === '01') img.src = 'assets2/cams/cam01_buff.jpg';
+    else img.src = 'assets2/cams/cam01_empty.jpg';
+  } else if (c === '02') {
+    if (G.pos.w_chica === '02') img.src = 'assets2/cams/cam02_w_chica.jpg';
+    else if (G.pos.w_foxy === '02') img.src = 'assets2/cams/cam02_w_foxy.jpg';
+    else if (G.pos.bonnie === '02') img.src = 'assets2/cams/cam02_bonnie.jpg';
+    else img.src = 'assets2/cams/cam02_empty.jpg';
+  } else if (c === '03') {
+    if (G.pos.w_freddy === '03') img.src = 'assets2/cams/cam03_w_freddy.jpg';
+    else if (G.pos.bonnie === '03') img.src = 'assets2/cams/cam03_bonnie.jpg';
+    else if (G.pos.buff === '03') img.src = 'assets2/cams/cam03_buff.jpg';
+    else img.src = 'assets2/cams/cam03_empty.jpg';
+  } else if (c === '04') {
+    if (G.pos.w_chica === '04') img.src = 'assets2/cams/cam04_w_chica.jpg';
+    else if (G.pos.bonnie === '04') img.src = 'assets2/cams/cam04_bonnie.jpg';
+    else if (G.pos.chica === '04') img.src = 'assets2/cams/cam04_chica.jpg';
+    else img.src = 'assets2/cams/cam04_empty.jpg';
+  } else if (c === '05') {
+    if (G.pos.w_bonnie === '05') img.src = 'assets2/cams/cam05_w_bonnie.jpg';
+    else if (G.pos.chica === '05') img.src = 'assets2/cams/cam05_chica.jpg';
+    else if (G.pos.buff === '05') img.src = 'assets2/cams/cam05_buff.jpg';
+    else img.src = 'assets2/cams/cam05_empty.jpg';
+  } else if (c === '06') {
+    if (G.pos.w_chica === '06') img.src = 'assets2/cams/cam06_w_chica.jpg';
+    else if (G.pos.w_foxy === '06') img.src = 'assets2/cams/cam06_w_foxy.jpg';
+    else if (G.pos.bonnie === '06') img.src = 'assets2/cams/cam06_bonnie.jpg';
+    else img.src = 'assets2/cams/cam06_empty.jpg';
+  } else if (c === '07') {
+    if (G.pos.w_freddy === '07') img.src = 'assets2/cams/cam07_w_freddy.jpg';
+    else if (G.pos.w_bonnie === '07') img.src = 'assets2/cams/cam07_w_bonnie.jpg';
+    else if (G.pos.chica === '07') img.src = 'assets2/cams/cam07_chica.jpg';
+    else if (G.pos.buff === '07') img.src = 'assets2/cams/cam07_buff.jpg';
+    else img.src = 'assets2/cams/cam07_empty.jpg';
+  } else if (c === '08') {
+    const wf = (G.pos.w_freddy === '08'), wb = (G.pos.w_bonnie === '08'), wc = (G.pos.w_chica === '08');
+    const b = (G.pos.buff === '08'), fx = (G.pos.foxy === '08');
+    if (wf && wb && wc) img.src = 'assets2/cams/cam08_all.jpg';
+    else if (wf) img.src = 'assets2/cams/cam08_w_freddy.jpg';
+    else if (wb) img.src = 'assets2/cams/cam08_w_bonnie.jpg';
+    else if (wc) img.src = 'assets2/cams/cam08_w_chica.jpg';
+    else if (b) img.src = 'assets2/cams/cam08_buff.jpg';
+    else if (fx) img.src = 'assets2/cams/cam08_foxy.jpg';
+    else img.src = 'assets2/cams/cam08_empty.jpg';
+  } else if (c === '09') {
+    const b = (G.pos.bonnie === '09'), ch = (G.pos.chica === '09'), f = (G.pos.freddy === '09');
+    if (b && ch && f) img.src = 'assets2/cams/cam09_all.jpg';
+    else if (!b && ch && f) img.src = 'assets2/cams/cam09_nobonnie.jpg';
+    else if (f) img.src = 'assets2/cams/cam09_freddy.jpg';
+    else img.src = 'assets2/cams/cam09_empty.jpg';
+  } else if (c === '10') {
+    img.src = (G.pos.freddy === '10') ? 'assets2/cams/cam10_freddy.jpg' : 'assets2/cams/cam10_empty.jpg';
+  } else if (c === '11') {
+    if (G.puppetEscaped) img.src = 'assets2/cams/cam11_3.jpg';
+    else if (G.musicBox < 20) img.src = 'assets2/cams/cam11_2.jpg';
+    else if (G.musicBox < 45) img.src = 'assets2/cams/cam11_1.jpg';
+    else img.src = 'assets2/cams/cam11_0.jpg';
+  } else if (c === '12') {
+    if (G.pos.w_foxy === '12') img.src = 'assets2/cams/cam12_w_foxy.jpg';
+    else if (G.pos.foxy === '12') img.src = 'assets2/cams/cam12_foxy.jpg';
+    else img.src = 'assets2/cams/cam12_empty.jpg';
+  }
+}
+
+// ============================================================================
+// AI MOVEMENT & OFFICE CONFRONTATION LOGIC
+// ============================================================================
+function rollAI(level) {
+  return level > 0 && (Math.floor(Math.random() * 20) + 1) <= level;
+}
+
+function startOfficeConfrontation(who) {
+  if (G.officeIntruder) return;
+  if (G.monitorOpen) {
+    // Force monitor down when animatronic enters the Office!
+    G.monitorOpen = false;
+    stopWindingBox();
+    document.getElementById('cam-screen').style.display = 'none';
+  }
+  G.officeIntruder = who;
+  G.intruderTimer = 0;
+  G.intruderReaction = 0;
+  playSound('hall_alarm');
+  updateOfficeVisuals();
+}
+
+// Main 60 FPS Loop
+let lastTime = performance.now();
+function gameLoop(now) {
+  const dt = Math.min(0.1, (now - lastTime) / 1000);
+  lastTime = now;
+  if (G.running) updateGame(dt);
+  requestAnimationFrame(gameLoop);
+}
+requestAnimationFrame(gameLoop);
+
+function updateGame(dt) {
+  // 1. Office Horizontal Panning
+  if (!G.monitorOpen) {
+    if (G.mouseX < 340) {
+      G.officePanX = Math.min(0, G.officePanX + ((340 - G.mouseX) / 340) * 380 * dt);
+    } else if (G.mouseX > 940) {
+      G.officePanX = Math.max(-320, G.officePanX - ((G.mouseX - 940) / 340) * 380 * dt);
+    }
+    document.getElementById('office-world').style.transform = `translateX(${G.officePanX}px)`;
+  }
+
+  // 2. Clock Progression
+  G.nightSeconds += dt;
+  const nh = Math.floor(G.nightSeconds / G.hourLengthSec);
+  if (nh > G.hour) {
+    G.hour = nh;
+    if (G.hour >= 6) { trigger6AMVictory(); return; }
+    updateHUD();
+  }
+
+  // 3. Flashlight Battery Drain
+  if (G.flashlightOn || G.leftVentLight || G.rightVentLight) {
+    G.battery = Math.max(0, G.battery - 1.15 * dt);
+    if (G.battery <= 0) {
+      G.flashlightOn = false;
+      updateOfficeVisuals();
+    }
+  }
+
+  // 4. Prize Corner Music Box (Monchhichi)
+  if (!G.puppetEscaped) {
+    if (G.windingBox && G.monitorOpen && G.currentCam === '11') {
+      G.musicBox = Math.min(100, G.musicBox + 26 * dt);
+      G.windSoundTick += dt;
+      if (G.windSoundTick >= 0.16) { G.windSoundTick = 0; playSound('wind'); }
+    } else {
+      const drainRate = 1.6 + (G.ai.puppet * 0.26);
+      G.musicBox = Math.max(0, G.musicBox - drainRate * dt);
+    }
+    drawMusicCircle();
+    if (G.musicBox <= 0) {
+      G.puppetEscaped = true;
+      G.puppetAttackTimer = 0;
+      if (G.monitorOpen && G.currentCam === '11') updateCameraFeed();
+    }
+  } else {
+    G.puppetAttackTimer += dt;
+    if (G.puppetAttackTimer >= 6.5) {
+      triggerJumpscare('puppet', 'The Music Box ran out and Monchhichi escaped Prize Corner!');
+      return;
+    }
+  }
+
+  // 5. Office Blackout Confrontation (Requires putting on Freddy Mask quickly!)
+  if (G.officeIntruder) {
+    G.intruderTimer += dt;
+    const flick = document.getElementById('blackout-flicker');
+    flick.style.opacity = (Math.random() < 0.45) ? '0.88' : '0.12';
+
+    if (!G.maskOn) {
+      G.intruderReaction += dt;
+      if (G.intruderReaction >= 1.35) {
+        flick.style.opacity = '0';
+        triggerJumpscare(G.officeIntruder, `You didn't put on the Freddy Mask fast enough when ${G.officeIntruder.toUpperCase()} entered the Office!`);
+        return;
+      }
+    }
+    if (G.intruderTimer >= 3.5 && G.maskOn) {
+      // Fooled by the Freddy Mask! Intruder leaves the Office!
+      flick.style.opacity = '0';
+      const who = G.officeIntruder;
+      G.officeIntruder = null;
+      if (who === 'freddy') G.pos.freddy = '09';
+      else if (who === 'buff') G.pos.buff = '08';
+      else if (who === 'bonnie') G.pos.bonnie = '03';
+      else if (who === 'chica') G.pos.chica = '07';
+      else if (who === 'w_freddy') G.pos.w_freddy = '08';
+      else if (who === 'w_bonnie') G.pos.w_bonnie = '08';
+      else if (who === 'w_chica') G.pos.w_chica = '08';
+      else if (who === 'w_foxy') G.pos.w_foxy = '12';
+      else if (who === 'w_golden') G.pos.w_golden = 'NONE';
+      playSound('vent');
+      updateOfficeVisuals();
+    }
+  }
+
+  // 6. Animatronic Movement Opportunity Timers (~5.0s each)
+  // DARK ASHI (Toy Freddy): 09 -> 10 -> HALL -> OFFICE
+  G.timers.freddy += dt;
+  if (G.timers.freddy >= 4.95) {
+    G.timers.freddy -= 4.95;
+    if (rollAI(G.ai.freddy)) {
+      if (G.pos.freddy === '09') G.pos.freddy = '10';
+      else if (G.pos.freddy === '10') G.pos.freddy = 'HALL';
+      else if (G.pos.freddy === 'HALL') startOfficeConfrontation('freddy');
+      updateCameraFeed(); updateOfficeVisuals();
+    }
+  }
+
+  // TRIBAL ASHI (Toy Bonnie): 09 -> 03 -> 04 -> 02 -> 06 -> VENT_R
+  G.timers.bonnie += dt;
+  if (G.timers.bonnie >= 4.85) {
+    G.timers.bonnie -= 4.85;
+    if (rollAI(G.ai.bonnie)) {
+      const c = G.pos.bonnie;
+      if (c === '09') G.pos.bonnie = '03';
+      else if (c === '03') G.pos.bonnie = '04';
+      else if (c === '04') G.pos.bonnie = '02';
+      else if (c === '02') { G.pos.bonnie = '06'; playSound('vent'); }
+      else if (c === '06') { G.pos.bonnie = 'VENT_R'; playSound('vent'); }
+      else if (c === 'VENT_R') {
+        if (G.maskOn) { G.pos.bonnie = '03'; playSound('vent'); }
+        else startOfficeConfrontation('bonnie');
+      }
+      updateCameraFeed(); updateOfficeVisuals();
+    }
+  }
+
+  // SPORT ASHI (Toy Chica): 09 -> 07 -> 04 -> 01 -> 05 -> VENT_L
+  G.timers.chica += dt;
+  if (G.timers.chica >= 4.90) {
+    G.timers.chica -= 4.90;
+    if (rollAI(G.ai.chica)) {
+      const c = G.pos.chica;
+      if (c === '09') G.pos.chica = '07';
+      else if (c === '07') G.pos.chica = '04';
+      else if (c === '04') G.pos.chica = '01';
+      else if (c === '01') { G.pos.chica = '05'; playSound('vent'); }
+      else if (c === '05') { G.pos.chica = 'VENT_L'; playSound('vent'); }
+      else if (c === 'VENT_L') {
+        if (G.maskOn) { G.pos.chica = '07'; playSound('vent'); }
+        else startOfficeConfrontation('chica');
+      }
+      updateCameraFeed(); updateOfficeVisuals();
+    }
+  }
+
+  // BUFF ASHI: 08 -> 07 -> 03 -> 01 -> 05 -> VENT_L / HALL -> OFFICE
+  G.timers.buff += dt;
+  if (G.timers.buff >= 5.10) {
+    G.timers.buff -= 5.10;
+    if (rollAI(G.ai.buff)) {
+      const c = G.pos.buff;
+      if (c === '08') G.pos.buff = '07';
+      else if (c === '07') G.pos.buff = (Math.random() < 0.5) ? '03' : 'HALL';
+      else if (c === '03') G.pos.buff = '01';
+      else if (c === '01') { G.pos.buff = '05'; playSound('vent'); }
+      else if (c === '05') { G.pos.buff = 'VENT_L'; playSound('vent'); }
+      else if (c === 'VENT_L' || c === 'HALL') {
+        if (G.maskOn && c === 'VENT_L') { G.pos.buff = '07'; playSound('vent'); }
+        else startOfficeConfrontation('buff');
+      }
+      updateCameraFeed(); updateOfficeVisuals();
+    }
+  }
+
+  // FIRE ASHI: 08 -> 12 -> HALL (Immune to Mask! Must Strobe Flashlight!)
+  G.timers.foxy += dt;
+  if (G.timers.foxy >= 5.05) {
+    G.timers.foxy -= 5.05;
+    if (rollAI(G.ai.foxy) && G.pos.foxy !== 'HALL') {
+      G.pos.foxy = (G.pos.foxy === '08') ? '12' : 'HALL';
+      G.foxyPatience = 0;
+      G.foxyFlashHits = 0;
+      updateCameraFeed(); updateOfficeVisuals();
+    }
+  }
+  if (G.pos.foxy === 'HALL') {
+    const rate = 1.0 + (G.ai.foxy * 0.08);
+    G.foxyPatience += rate * dt;
+    if (G.foxyPatience >= 12.5) {
+      triggerJumpscare('foxy', 'Fire Ashi lunged from the Central Hallway! (Strobe your Flashlight [Z] to reset him!)');
+      return;
+    }
+  }
+
+  // WITHERED ASHI (FNaA 1 Freddy): 08 -> 07 -> 03 -> HALL -> OFFICE
+  G.timers.w_freddy += dt;
+  if (G.timers.w_freddy >= 5.00) {
+    G.timers.w_freddy -= 5.00;
+    if (rollAI(G.ai.w_freddy)) {
+      const c = G.pos.w_freddy;
+      if (c === '08') G.pos.w_freddy = '07';
+      else if (c === '07') G.pos.w_freddy = '03';
+      else if (c === '03') G.pos.w_freddy = 'HALL';
+      else if (c === 'HALL') startOfficeConfrontation('w_freddy');
+      updateCameraFeed(); updateOfficeVisuals();
+    }
+  }
+
+  // WITHERED DRESS ASHI (FNaA 1 Bonnie): 08 -> 07 -> 01 -> 05 -> VENT_L -> OFFICE
+  G.timers.w_bonnie += dt;
+  if (G.timers.w_bonnie >= 4.95) {
+    G.timers.w_bonnie -= 4.95;
+    if (rollAI(G.ai.w_bonnie)) {
+      const c = G.pos.w_bonnie;
+      if (c === '08') G.pos.w_bonnie = '07';
+      else if (c === '07') G.pos.w_bonnie = (Math.random() < 0.4) ? 'HALL' : '01';
+      else if (c === 'HALL') G.pos.w_bonnie = '01';
+      else if (c === '01') { G.pos.w_bonnie = '05'; playSound('vent'); }
+      else if (c === '05') { G.pos.w_bonnie = 'VENT_L'; playSound('vent'); }
+      else if (c === 'VENT_L') {
+        if (G.maskOn) { G.pos.w_bonnie = '08'; playSound('vent'); }
+        else startOfficeConfrontation('w_bonnie');
+      }
+      updateCameraFeed(); updateOfficeVisuals();
+    }
+  }
+
+  // WITHERED PIZZA ASHI (FNaA 1 Chica): 08 -> 04 -> 02 -> 06 -> VENT_R -> OFFICE
+  G.timers.w_chica += dt;
+  if (G.timers.w_chica >= 5.02) {
+    G.timers.w_chica -= 5.02;
+    if (rollAI(G.ai.w_chica)) {
+      const c = G.pos.w_chica;
+      if (c === '08') G.pos.w_chica = '04';
+      else if (c === '04') G.pos.w_chica = '02';
+      else if (c === '02') { G.pos.w_chica = '06'; playSound('vent'); }
+      else if (c === '06') { G.pos.w_chica = 'VENT_R'; playSound('vent'); }
+      else if (c === 'VENT_R') {
+        if (G.maskOn) { G.pos.w_chica = '08'; playSound('vent'); }
+        else startOfficeConfrontation('w_chica');
+      }
+      updateCameraFeed(); updateOfficeVisuals();
+    }
+  }
+
+  // WITHERED BIKINI ASHI (FNaA 1 Foxy / Mangle): 12 -> 02 -> 06 -> VENT_R -> OFFICE
+  G.timers.w_foxy += dt;
+  if (G.timers.w_foxy >= 5.12) {
+    G.timers.w_foxy -= 5.12;
+    if (rollAI(G.ai.w_foxy)) {
+      const c = G.pos.w_foxy;
+      if (c === '12') G.pos.w_foxy = '02';
+      else if (c === '02') { G.pos.w_foxy = '06'; playSound('vent'); }
+      else if (c === '06') { G.pos.w_foxy = 'VENT_R'; playSound('vent'); }
+      else if (c === 'VENT_R') {
+        if (G.maskOn) { G.pos.w_foxy = '12'; playSound('vent'); }
+        else startOfficeConfrontation('w_foxy');
+      }
+      updateCameraFeed(); updateOfficeVisuals();
+    }
+  }
+
+  // WITHERED GOLDEN ASHI (FNaA 1 Golden Freddy): Apparition in HALL or OFFICE
+  G.timers.w_golden += dt;
+  if (G.timers.w_golden >= 5.25) {
+    G.timers.w_golden -= 5.25;
+    if (rollAI(G.ai.w_golden)) {
+      if (G.pos.w_golden === 'NONE') {
+        G.pos.w_golden = 'HALL';
+        updateOfficeVisuals();
+      } else if (G.pos.w_golden === 'HALL') {
+        if (G.maskOn) G.pos.w_golden = 'NONE';
+        else startOfficeConfrontation('w_golden');
+        updateOfficeVisuals();
+      }
+    }
+  }
+
+  updateHUD();
+  if (G.radarOn) updateRadarUI();
+}
+
+function drawMusicCircle() {
+  const c = document.getElementById('music-circle-canvas');
+  const ctx = c.getContext('2d');
+  ctx.clearRect(0, 0, 76, 76);
+  ctx.beginPath();
+  ctx.arc(38, 38, 30, 0, Math.PI * 2);
+  ctx.strokeStyle = '#333';
+  ctx.lineWidth = 8;
+  ctx.stroke();
+
+  const pct = G.musicBox / 100.0;
+  ctx.beginPath();
+  ctx.arc(38, 38, 30, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * pct);
+  ctx.strokeStyle = pct > 0.35 ? '#2ecc40' : (pct > 0.15 ? '#ff851b' : '#ff4136');
+  ctx.lineWidth = 8;
+  ctx.stroke();
+
+  ctx.fillStyle = '#fff';
+  ctx.font = 'bold 14px monospace';
+  ctx.textAlign = 'center';
+  ctx.fillText(`${Math.ceil(G.musicBox)}%`, 38, 43);
+}
+
+function updateHUD() {
+  document.getElementById('hud-time').textContent = `${G.hour === 0 ? 12 : G.hour} AM`;
+  document.getElementById('hud-night').textContent = `Night ${G.night}`;
+
+  const bars = document.getElementById('bat-bars').children;
+  const activeBars = Math.ceil(G.battery / 25);
+  for (let i = 0; i < 4; i++) {
+    bars[i].style.visibility = (i < activeBars) ? 'visible' : 'hidden';
+  }
+
+  const warn = document.getElementById('music-warning');
+  warn.style.display = (G.musicBox < 35) ? 'block' : 'none';
+}
+
+function toggleSpeedMode() {
+  G.fastMode = !G.fastMode;
+  G.hourLengthSec = G.fastMode ? 25 : 70;
+  const btn = document.getElementById('btn-speed');
+  btn.textContent = G.fastMode ? 'Speed: 3x (25s/hr)' : 'Speed: 1x (70s/hr)';
+  btn.classList.toggle('active', G.fastMode);
+}
+
+function toggleRadar() {
+  G.radarOn = !G.radarOn;
+  const btn = document.getElementById('btn-radar');
+  btn.textContent = G.radarOn ? 'AI Radar: ON' : 'AI Radar: OFF';
+  btn.classList.toggle('active', G.radarOn);
+  document.getElementById('ai-debug-box').style.display = G.radarOn ? 'block' : 'none';
+  updateRadarUI();
+}
+
+function updateRadarUI() {
+  ['01','02','03','04','05','06','07','08','09','10','11','12'].forEach(id => {
+    const el = document.getElementById('rad-' + id);
+    if (el) el.innerHTML = '';
+  });
+  const addTag = (cam, txt, col) => {
+    const el = document.getElementById('rad-' + cam);
+    if (el) el.innerHTML += `<span class="r-dot" style="background:${col}">${txt}</span>`;
+  };
+  addTag(G.pos.freddy,   'D',  '#aaa');
+  addTag(G.pos.bonnie,   'T',  '#5f9');
+  addTag(G.pos.chica,    'S',  '#fe4');
+  addTag(G.pos.buff,     'B',  '#f84');
+  addTag(G.pos.foxy,     'Fx', '#f44');
+  addTag(G.pos.w_freddy, 'WF', '#c85');
+  addTag(G.pos.w_bonnie, 'WB', '#a6f');
+  addTag(G.pos.w_chica,  'WC', '#da3');
+  addTag(G.pos.w_foxy,   'WM', '#f7a');
+
+  document.getElementById('ai-debug-box').innerHTML =
+    `<b>FNaA 2 Live AI (11 Characters):</b><br>` +
+    `Toys: Dark=${G.pos.freddy} | Tribal=${G.pos.bonnie} | Sport=${G.pos.chica} | Buff=${G.pos.buff} | Fire=${G.pos.foxy} (${G.foxyFlashHits}/5)<br>` +
+    `Withered (Part 1): W-Freddy=${G.pos.w_freddy} | W-Bonnie=${G.pos.w_bonnie} | W-Chica=${G.pos.w_chica} | W-Bikini=${G.pos.w_foxy} | W-Golden=${G.pos.w_golden}<br>` +
+    `Monchhichi Box: ${G.musicBox.toFixed(0)}% | Intruder: ${G.officeIntruder || 'None'}`;
+}
+
+function triggerJumpscare(who, reason) {
+  G.running = false;
+  document.getElementById('hud-layer').style.display = 'none';
+  document.getElementById('cam-screen').style.display = 'none';
+  document.getElementById('mask-overlay').classList.remove('on');
+  document.getElementById('blackout-flicker').style.opacity = '0';
+
+  const layer = document.getElementById('jumpscare-layer');
+  document.getElementById('jumpscare-char').src = `assets2/sprites/${who}.png`;
+  document.getElementById('gameover-img').src = `assets2/sprites/${who}.png`;
+  layer.style.display = 'flex';
+  playSound('jumpscare');
+
+  setTimeout(() => {
+    layer.style.display = 'none';
+    staticCanvas.style.opacity = '0.65';
+    document.getElementById('gameover-reason').textContent = reason || '';
+    document.getElementById('gameover-screen').style.display = 'flex';
+  }, 1450);
+}
+
+function trigger6AMVictory() {
+  G.running = false;
+  document.getElementById('hud-layer').style.display = 'none';
+  document.getElementById('cam-screen').style.display = 'none';
+  playSound('chime6am');
+
+  if (G.night < 5 && savedNight <= G.night) {
+    savedNight = G.night + 1;
+    localStorage.setItem('fnaa2_saved_night', String(savedNight));
+  }
+  if (G.night === 5) starsUnlocked.s1 = true;
+  if (G.night === 6) starsUnlocked.s2 = true;
+  if (G.night === 7) starsUnlocked.s3 = true;
+  localStorage.setItem('fnaa2_stars', JSON.stringify(starsUnlocked));
+  updateTitleUI();
+
+  const vic = document.getElementById('victory-screen');
+  const clk = document.getElementById('victory-clock');
+  const sub = document.getElementById('victory-sub');
+  clk.textContent = '5:00 AM';
+  sub.style.opacity = '0';
+  sub.textContent = (G.night >= 5) ? 'YOU SURVIVED FIVE NIGHTS AT ASHI 2!' : `Advancing to Night ${G.night + 1}...`;
+  vic.style.display = 'flex';
+
+  setTimeout(() => { clk.textContent = '6:00 AM'; sub.style.opacity = '1'; }, 1200);
+  setTimeout(() => {
+    vic.style.display = 'none';
+    if (G.night < 5) startSelectedNight(G.night + 1);
+    else returnToMenu();
+  }, 5000);
+}
+
+function returnToMenu() {
+  G.running = false;
+  document.getElementById('gameover-screen').style.display = 'none';
+  document.getElementById('victory-screen').style.display = 'none';
+  document.getElementById('hud-layer').style.display = 'none';
+  document.getElementById('cam-screen').style.display = 'none';
+  document.getElementById('title-screen').style.display = 'flex';
+  staticCanvas.style.opacity = '0.18';
+}
+</script>
+</body>
+</html>
