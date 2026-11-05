@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -898,14 +898,54 @@ const CAM_NAMES = {
   '12': "CAM 12 - Kids' Cove"
 };
 
-const NIGHT_STARTING_AI = {
-  1: { freddy: 2, bonnie: 3, chica: 3, foxy: 2, buff: 0, puppet: 3, w_freddy: 1, w_bonnie: 1, w_chica: 1, w_foxy: 2, w_golden: 0 },
-  2: { freddy: 3, bonnie: 5, chica: 4, foxy: 5, buff: 2, puppet: 6, w_freddy: 2, w_bonnie: 3, w_chica: 3, w_foxy: 5, w_golden: 0 },
-  3: { freddy: 4, bonnie: 5, chica: 5, foxy: 8, buff: 6, puppet: 9, w_freddy: 6, w_bonnie: 8, w_chica: 7, w_foxy: 7, w_golden: 2 },
-  4: { freddy: 6, bonnie: 7, chica: 7, foxy: 11, buff: 9, puppet: 12, w_freddy: 8, w_bonnie: 10, w_chica: 10, w_foxy: 10, w_golden: 4 },
-  5: { freddy: 9, bonnie: 9, chica: 9, foxy: 14, buff: 12, puppet: 15, w_freddy: 11, w_bonnie: 12, w_chica: 12, w_foxy: 12, w_golden: 7 },
-  6: { freddy: 12, bonnie: 12, chica: 12, foxy: 17, buff: 15, puppet: 18, w_freddy: 15, w_bonnie: 15, w_chica: 15, w_foxy: 15, w_golden: 12 }
-};
+// Authentic FNaF 2 Hourly AI Progression (Night 1 is dormant 12 AM - 2 AM, then ramps up gently!)
+function getNightHourAI(night, hour) {
+  if (night === 7) return { ...customAI };
+  if (night === 1) {
+    if (hour < 2) {
+      // 12 AM - 2 AM on Night 1: All animatronics & Music Box are 0 so player can learn the controls!
+      return { freddy: 0, bonnie: 0, chica: 0, foxy: 0, buff: 0, puppet: 0, w_freddy: 0, w_bonnie: 0, w_chica: 0, w_foxy: 0, w_golden: 0 };
+    } else if (hour === 2) {
+      return { freddy: 1, bonnie: 2, chica: 1, foxy: 0, buff: 0, puppet: 1, w_freddy: 0, w_bonnie: 0, w_chica: 0, w_foxy: 0, w_golden: 0 };
+    } else {
+      // 3 AM - 6 AM on Night 1
+      return { freddy: 2, bonnie: 2, chica: 2, foxy: 1, buff: 0, puppet: 2, w_freddy: 0, w_bonnie: 0, w_chica: 0, w_foxy: 0, w_golden: 0 };
+    }
+  }
+  if (night === 2) {
+    if (hour < 3) {
+      return { freddy: 1, bonnie: 3, chica: 2, foxy: 1, buff: 0, puppet: 3, w_freddy: 0, w_bonnie: 0, w_chica: 0, w_foxy: 2, w_golden: 0 };
+    } else {
+      return { freddy: 2, bonnie: 3, chica: 3, foxy: 2, buff: 1, puppet: 4, w_freddy: 0, w_bonnie: 0, w_chica: 0, w_foxy: 3, w_golden: 0 };
+    }
+  }
+  if (night === 3) {
+    if (hour < 2) {
+      return { freddy: 0, bonnie: 0, chica: 0, foxy: 2, buff: 2, puppet: 5, w_freddy: 2, w_bonnie: 3, w_chica: 3, w_foxy: 0, w_golden: 0 };
+    } else {
+      return { freddy: 1, bonnie: 1, chica: 1, foxy: 3, buff: 3, puppet: 6, w_freddy: 3, w_bonnie: 5, w_chica: 4, w_foxy: 2, w_golden: 0 };
+    }
+  }
+  if (night === 4) {
+    if (hour < 2) {
+      return { freddy: 0, bonnie: 1, chica: 0, foxy: 5, buff: 4, puppet: 7, w_freddy: 3, w_bonnie: 5, w_chica: 4, w_foxy: 5, w_golden: 0 };
+    } else {
+      return { freddy: 1, bonnie: 3, chica: 2, foxy: 7, buff: 6, puppet: 9, w_freddy: 4, w_bonnie: 7, w_chica: 6, w_foxy: 5, w_golden: 1 };
+    }
+  }
+  if (night === 5) {
+    if (hour < 2) {
+      return { freddy: 2, bonnie: 2, chica: 2, foxy: 5, buff: 5, puppet: 10, w_freddy: 5, w_bonnie: 5, w_chica: 5, w_foxy: 6, w_golden: 1 };
+    } else {
+      return { freddy: 5, bonnie: 5, chica: 5, foxy: 8, buff: 9, puppet: 12, w_freddy: 9, w_bonnie: 9, w_chica: 9, w_foxy: 9, w_golden: 3 };
+    }
+  }
+  // Night 6
+  if (hour < 2) {
+    return { freddy: 5, bonnie: 5, chica: 5, foxy: 10, buff: 10, puppet: 14, w_freddy: 10, w_bonnie: 10, w_chica: 10, w_foxy: 10, w_golden: 5 };
+  }
+  return { freddy: 10, bonnie: 10, chica: 10, foxy: 15, buff: 15, puppet: 16, w_freddy: 15, w_bonnie: 15, w_chica: 15, w_foxy: 15, w_golden: 10 };
+}
 
 let audioCtx = null;
 function ensureAudio() {
@@ -1144,10 +1184,11 @@ function startSelectedNight(n) {
     w_freddy: '08', w_bonnie: '08', w_chica: '08', w_foxy: '12', w_golden: 'NONE'
   };
   G.timers = {
-    freddy: 0, bonnie: 0, chica: 0, foxy: 0, buff: 0,
-    w_freddy: 0, w_bonnie: 0, w_chica: 0, w_foxy: 0, w_golden: 0
+    freddy: 0, bonnie: 1.2, chica: 2.4, foxy: 3.6, buff: 0.8,
+    w_freddy: 1.8, w_bonnie: 3.0, w_chica: 4.1, w_foxy: 2.0, w_golden: 0
   };
-  G.ai = (n === 7) ? { ...customAI } : { ...NIGHT_STARTING_AI[n] };
+  G.ventMaskHold = 0;
+  G.ai = getNightHourAI(n, 0);
 
   document.getElementById('mask-overlay').classList.remove('on');
   document.getElementById('cam-screen').style.display = 'none';
@@ -1414,6 +1455,14 @@ function rollAI(level) {
   return level > 0 && (Math.floor(Math.random() * 20) + 1) <= level;
 }
 
+// Authentic FNaF 2 Camera & Flashlight Stun:
+// Watching a room on camera or shining the hallway flashlight stuns animatronics in that spot!
+function isRoomStunned(room) {
+  if (G.monitorOpen && G.currentCam === room) return true;
+  if (!G.monitorOpen && G.flashlightOn && G.battery > 0 && room === 'HALL') return true;
+  return false;
+}
+
 function startOfficeConfrontation(who) {
   if (G.officeIntruder) return;
   if (G.monitorOpen) {
@@ -1450,32 +1499,33 @@ function updateGame(dt) {
     document.getElementById('office-world').style.transform = `translateX(${G.officePanX}px)`;
   }
 
-  // 2. Clock Progression
+  // 2. Clock Progression & Authentic FNaF 2 Hourly AI Scaling
   G.nightSeconds += dt;
   const nh = Math.floor(G.nightSeconds / G.hourLengthSec);
   if (nh > G.hour) {
     G.hour = nh;
     if (G.hour >= 6) { trigger6AMVictory(); return; }
+    G.ai = getNightHourAI(G.night, G.hour);
     updateHUD();
   }
 
-  // 3. Flashlight Battery Drain
+  // 3. Flashlight Battery Drain (Gentle drain matching FNaF 2 battery capacity)
   if (G.flashlightOn || G.leftVentLight || G.rightVentLight) {
-    G.battery = Math.max(0, G.battery - 1.15 * dt);
+    G.battery = Math.max(0, G.battery - 0.85 * dt);
     if (G.battery <= 0) {
       G.flashlightOn = false;
       updateOfficeVisuals();
     }
   }
 
-  // 4. Prize Corner Music Box (Monchhichi)
+  // 4. Prize Corner Music Box (Monchhichi) — Dormant when puppet AI is 0 (Night 1 12 AM - 2 AM)!
   if (!G.puppetEscaped) {
     if (G.windingBox && G.monitorOpen && G.currentCam === '11') {
-      G.musicBox = Math.min(100, G.musicBox + 26 * dt);
+      G.musicBox = Math.min(100, G.musicBox + 28 * dt);
       G.windSoundTick += dt;
       if (G.windSoundTick >= 0.16) { G.windSoundTick = 0; playSound('wind'); }
     } else {
-      const drainRate = 1.6 + (G.ai.puppet * 0.26);
+      const drainRate = (G.ai.puppet <= 0) ? 0 : (0.65 + (G.ai.puppet * 0.16));
       G.musicBox = Math.max(0, G.musicBox - drainRate * dt);
     }
     drawMusicCircle();
@@ -1486,27 +1536,49 @@ function updateGame(dt) {
     }
   } else {
     G.puppetAttackTimer += dt;
-    if (G.puppetAttackTimer >= 6.5) {
+    if (G.puppetAttackTimer >= 8.0) {
       triggerJumpscare('puppet', 'The Music Box ran out and Monchhichi escaped Prize Corner!');
       return;
     }
   }
 
-  // 5. Office Blackout Confrontation (Requires putting on Freddy Mask quickly!)
+  // 4b. Vent Blind-Spot Mask Repel (Hold Mask for 2.0s to force Vent animatronics to crawl away!)
+  if (G.maskOn && !G.officeIntruder) {
+    G.ventMaskHold = (G.ventMaskHold || 0) + dt;
+    if (G.ventMaskHold >= 2.0) {
+      let repelled = false;
+      if (G.pos.bonnie === 'VENT_R')   { G.pos.bonnie = '03'; repelled = true; }
+      if (G.pos.chica === 'VENT_L')    { G.pos.chica = '07'; repelled = true; }
+      if (G.pos.buff === 'VENT_L')     { G.pos.buff = '08'; repelled = true; }
+      if (G.pos.w_bonnie === 'VENT_L') { G.pos.w_bonnie = '08'; repelled = true; }
+      if (G.pos.w_chica === 'VENT_R')  { G.pos.w_chica = '08'; repelled = true; }
+      if (G.pos.w_foxy === 'VENT_R')   { G.pos.w_foxy = '12'; repelled = true; }
+      if (repelled) {
+        G.ventMaskHold = 0;
+        playSound('vent');
+        updateOfficeVisuals();
+      }
+    }
+  } else {
+    G.ventMaskHold = 0;
+  }
+
+  // 5. Office Blackout Confrontation (Requires putting on Freddy Mask!)
   if (G.officeIntruder) {
     G.intruderTimer += dt;
     const flick = document.getElementById('blackout-flicker');
     flick.style.opacity = (Math.random() < 0.45) ? '0.88' : '0.12';
 
+    const maxReaction = (G.night <= 2) ? 1.85 : 1.40;
     if (!G.maskOn) {
       G.intruderReaction += dt;
-      if (G.intruderReaction >= 1.35) {
+      if (G.intruderReaction >= maxReaction) {
         flick.style.opacity = '0';
         triggerJumpscare(G.officeIntruder, `You didn't put on the Freddy Mask fast enough when ${G.officeIntruder.toUpperCase()} entered the Office!`);
         return;
       }
     }
-    if (G.intruderTimer >= 3.5 && G.maskOn) {
+    if (G.intruderTimer >= 2.8 && G.maskOn) {
       // Fooled by the Freddy Mask! Intruder leaves the Office!
       flick.style.opacity = '0';
       const who = G.officeIntruder;
@@ -1525,14 +1597,16 @@ function updateGame(dt) {
     }
   }
 
-  // 6. Animatronic Movement Opportunity Timers (~5.0s each)
-  // DARK ASHI (Toy Freddy): 09 -> 10 -> HALL -> OFFICE
+  // 6. Animatronic Movement Opportunity Timers (~5.2s–5.8s intervals + Camera/Flashlight Stun)
+  // DARK ASHI (Toy Freddy): 09 -> 10 -> 07 -> 03 -> HALL -> OFFICE
   G.timers.freddy += dt;
-  if (G.timers.freddy >= 4.95) {
-    G.timers.freddy -= 4.95;
-    if (rollAI(G.ai.freddy)) {
+  if (G.timers.freddy >= 5.35) {
+    G.timers.freddy -= 5.35;
+    if (!isRoomStunned(G.pos.freddy) && rollAI(G.ai.freddy)) {
       if (G.pos.freddy === '09') G.pos.freddy = '10';
-      else if (G.pos.freddy === '10') G.pos.freddy = 'HALL';
+      else if (G.pos.freddy === '10') G.pos.freddy = '07';
+      else if (G.pos.freddy === '07') G.pos.freddy = '03';
+      else if (G.pos.freddy === '03') G.pos.freddy = 'HALL';
       else if (G.pos.freddy === 'HALL') startOfficeConfrontation('freddy');
       updateCameraFeed(); updateOfficeVisuals();
     }
@@ -1540,9 +1614,9 @@ function updateGame(dt) {
 
   // TRIBAL ASHI (Toy Bonnie): 09 -> 03 -> 04 -> 02 -> 06 -> VENT_R
   G.timers.bonnie += dt;
-  if (G.timers.bonnie >= 4.85) {
-    G.timers.bonnie -= 4.85;
-    if (rollAI(G.ai.bonnie)) {
+  if (G.timers.bonnie >= 5.20) {
+    G.timers.bonnie -= 5.20;
+    if (!isRoomStunned(G.pos.bonnie) && rollAI(G.ai.bonnie)) {
       const c = G.pos.bonnie;
       if (c === '09') G.pos.bonnie = '03';
       else if (c === '03') G.pos.bonnie = '04';
@@ -1559,9 +1633,9 @@ function updateGame(dt) {
 
   // SPORT ASHI (Toy Chica): 09 -> 07 -> 04 -> 01 -> 05 -> VENT_L
   G.timers.chica += dt;
-  if (G.timers.chica >= 4.90) {
-    G.timers.chica -= 4.90;
-    if (rollAI(G.ai.chica)) {
+  if (G.timers.chica >= 5.30) {
+    G.timers.chica -= 5.30;
+    if (!isRoomStunned(G.pos.chica) && rollAI(G.ai.chica)) {
       const c = G.pos.chica;
       if (c === '09') G.pos.chica = '07';
       else if (c === '07') G.pos.chica = '04';
@@ -1578,17 +1652,17 @@ function updateGame(dt) {
 
   // BUFF ASHI: 08 -> 07 -> 03 -> 01 -> 05 -> VENT_L / HALL -> OFFICE
   G.timers.buff += dt;
-  if (G.timers.buff >= 5.10) {
-    G.timers.buff -= 5.10;
-    if (rollAI(G.ai.buff)) {
+  if (G.timers.buff >= 5.50) {
+    G.timers.buff -= 5.50;
+    if (!isRoomStunned(G.pos.buff) && rollAI(G.ai.buff)) {
       const c = G.pos.buff;
       if (c === '08') G.pos.buff = '07';
-      else if (c === '07') G.pos.buff = (Math.random() < 0.5) ? '03' : 'HALL';
-      else if (c === '03') G.pos.buff = '01';
+      else if (c === '07') G.pos.buff = '03';
+      else if (c === '03') G.pos.buff = (Math.random() < 0.5) ? '01' : 'HALL';
       else if (c === '01') { G.pos.buff = '05'; playSound('vent'); }
       else if (c === '05') { G.pos.buff = 'VENT_L'; playSound('vent'); }
       else if (c === 'VENT_L' || c === 'HALL') {
-        if (G.maskOn && c === 'VENT_L') { G.pos.buff = '07'; playSound('vent'); }
+        if (G.maskOn && c === 'VENT_L') { G.pos.buff = '08'; playSound('vent'); }
         else startOfficeConfrontation('buff');
       }
       updateCameraFeed(); updateOfficeVisuals();
@@ -1597,9 +1671,9 @@ function updateGame(dt) {
 
   // FIRE ASHI: 08 -> 12 -> HALL (Immune to Mask! Must Strobe Flashlight!)
   G.timers.foxy += dt;
-  if (G.timers.foxy >= 5.05) {
-    G.timers.foxy -= 5.05;
-    if (rollAI(G.ai.foxy) && G.pos.foxy !== 'HALL') {
+  if (G.timers.foxy >= 5.45) {
+    G.timers.foxy -= 5.45;
+    if (!isRoomStunned(G.pos.foxy) && rollAI(G.ai.foxy) && G.pos.foxy !== 'HALL') {
       G.pos.foxy = (G.pos.foxy === '08') ? '12' : 'HALL';
       G.foxyPatience = 0;
       G.foxyFlashHits = 0;
@@ -1607,9 +1681,9 @@ function updateGame(dt) {
     }
   }
   if (G.pos.foxy === 'HALL') {
-    const rate = 1.0 + (G.ai.foxy * 0.08);
+    const rate = 0.8 + (G.ai.foxy * 0.07);
     G.foxyPatience += rate * dt;
-    if (G.foxyPatience >= 12.5) {
+    if (G.foxyPatience >= 14.0) {
       triggerJumpscare('foxy', 'Fire Ashi lunged from the Central Hallway! (Strobe your Flashlight [Z] to reset him!)');
       return;
     }
@@ -1617,9 +1691,9 @@ function updateGame(dt) {
 
   // WITHERED ASHI (FNaA 1 Freddy): 08 -> 07 -> 03 -> HALL -> OFFICE
   G.timers.w_freddy += dt;
-  if (G.timers.w_freddy >= 5.00) {
-    G.timers.w_freddy -= 5.00;
-    if (rollAI(G.ai.w_freddy)) {
+  if (G.timers.w_freddy >= 5.40) {
+    G.timers.w_freddy -= 5.40;
+    if (!isRoomStunned(G.pos.w_freddy) && rollAI(G.ai.w_freddy)) {
       const c = G.pos.w_freddy;
       if (c === '08') G.pos.w_freddy = '07';
       else if (c === '07') G.pos.w_freddy = '03';
@@ -1629,14 +1703,14 @@ function updateGame(dt) {
     }
   }
 
-  // WITHERED DRESS ASHI (FNaA 1 Bonnie): 08 -> 07 -> 01 -> 05 -> VENT_L -> OFFICE
+  // WITHERED DRESS ASHI (FNaA 1 Bonnie): 08 -> 07 -> HALL -> 01 -> 05 -> VENT_L -> OFFICE
   G.timers.w_bonnie += dt;
-  if (G.timers.w_bonnie >= 4.95) {
-    G.timers.w_bonnie -= 4.95;
-    if (rollAI(G.ai.w_bonnie)) {
+  if (G.timers.w_bonnie >= 5.35) {
+    G.timers.w_bonnie -= 5.35;
+    if (!isRoomStunned(G.pos.w_bonnie) && rollAI(G.ai.w_bonnie)) {
       const c = G.pos.w_bonnie;
       if (c === '08') G.pos.w_bonnie = '07';
-      else if (c === '07') G.pos.w_bonnie = (Math.random() < 0.4) ? 'HALL' : '01';
+      else if (c === '07') G.pos.w_bonnie = 'HALL';
       else if (c === 'HALL') G.pos.w_bonnie = '01';
       else if (c === '01') { G.pos.w_bonnie = '05'; playSound('vent'); }
       else if (c === '05') { G.pos.w_bonnie = 'VENT_L'; playSound('vent'); }
@@ -1650,9 +1724,9 @@ function updateGame(dt) {
 
   // WITHERED PIZZA ASHI (FNaA 1 Chica): 08 -> 04 -> 02 -> 06 -> VENT_R -> OFFICE
   G.timers.w_chica += dt;
-  if (G.timers.w_chica >= 5.02) {
-    G.timers.w_chica -= 5.02;
-    if (rollAI(G.ai.w_chica)) {
+  if (G.timers.w_chica >= 5.45) {
+    G.timers.w_chica -= 5.45;
+    if (!isRoomStunned(G.pos.w_chica) && rollAI(G.ai.w_chica)) {
       const c = G.pos.w_chica;
       if (c === '08') G.pos.w_chica = '04';
       else if (c === '04') G.pos.w_chica = '02';
@@ -1668,9 +1742,9 @@ function updateGame(dt) {
 
   // WITHERED BIKINI ASHI (FNaA 1 Foxy / Mangle): 12 -> 02 -> 06 -> VENT_R -> OFFICE
   G.timers.w_foxy += dt;
-  if (G.timers.w_foxy >= 5.12) {
-    G.timers.w_foxy -= 5.12;
-    if (rollAI(G.ai.w_foxy)) {
+  if (G.timers.w_foxy >= 5.50) {
+    G.timers.w_foxy -= 5.50;
+    if (!isRoomStunned(G.pos.w_foxy) && rollAI(G.ai.w_foxy)) {
       const c = G.pos.w_foxy;
       if (c === '12') G.pos.w_foxy = '02';
       else if (c === '02') { G.pos.w_foxy = '06'; playSound('vent'); }
@@ -1685,8 +1759,8 @@ function updateGame(dt) {
 
   // WITHERED GOLDEN ASHI (FNaA 1 Golden Freddy): Apparition in HALL or OFFICE
   G.timers.w_golden += dt;
-  if (G.timers.w_golden >= 5.25) {
-    G.timers.w_golden -= 5.25;
+  if (G.timers.w_golden >= 5.75) {
+    G.timers.w_golden -= 5.75;
     if (rollAI(G.ai.w_golden)) {
       if (G.pos.w_golden === 'NONE') {
         G.pos.w_golden = 'HALL';
@@ -1848,3 +1922,4 @@ function returnToMenu() {
 </script>
 </body>
 </html>
+
