@@ -551,6 +551,9 @@
       <div class="menu-btn" onclick="openCustomNight()">
         <span class="arrow">&gt;&gt;</span> Custom Night
       </div>
+      <div class="menu-btn" style="color:#ffdd55;" onclick="openFnaf2EasterEggs()">
+        <span class="arrow">&gt;&gt;</span> &#x1F95A; Easter Eggs &amp; Death Minigames
+      </div>
 
       <div style="margin-top:6px;font-size:12px;color:#888;">QUICK SELECT NIGHT (FNAF 2 MECHANICS: MASK + FLASHLIGHT + MUSIC BOX):</div>
       <div class="night-select-row">
@@ -563,7 +566,12 @@
         <button class="night-pill" onclick="openCustomNight()">Night 7 (Custom)</button>
       </div>
 
-      <a href="https://github.com/AkashiZai/fivenightatashi" target="_blank" class="switch-game-btn">&#x25C0; Five Nights at Ashi 1</a>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;">
+        <a href="index.html" class="switch-game-btn">&#x25C0; Part 1</a>
+        <a href="fnaf3.html" class="switch-game-btn" style="border-color:#88d840;color:#b8ff77;">&#x25B6; Part 3</a>
+        <a href="fnaf4.html" class="switch-game-btn" style="border-color:#ff3333;color:#ff8888;">&#x25B6; Part 4</a>
+        <a href="fnafsl.html" class="switch-game-btn" style="border-color:#ff2e55;color:#ff88aa;">&#x25B6; Sister Location</a>
+      </div>
     </div>
 
     <div class="title-footer">
@@ -845,6 +853,7 @@
     <div id="dev-toolbar">
       <button class="tool-pill" id="btn-speed" onclick="toggleSpeedMode()">Speed: 1x (70s/hr)</button>
       <button class="tool-pill" id="btn-radar" onclick="toggleRadar()">AI Radar: OFF</button>
+      <button class="tool-pill" style="border-color:#ffdd55;color:#ffdd55;" onclick="openFnaf2EasterEggs()">&#x1F95A; Easter Eggs</button>
       <a href="index.html" class="tool-pill" style="text-decoration:none;">Switch to FNaA 1</a>
     </div>
     <div id="ai-debug-box"></div>
@@ -875,6 +884,53 @@
   <div id="jumpscare-layer">
     <img id="jumpscare-bg" src="assets2/cams/office_normal.jpg" alt="BG">
     <img id="jumpscare-char" src="assets2/sprites/foxy.png" alt="Jumpscare">
+  </div>
+
+  <!-- FNAF 2 OFFICE EASTER EGG SPRITES (JJ, SHADOW BONNIE, ENDO-02, POSTER HONK) -->
+  <div onclick="triggerFnaf2EE('honk')" title="Honk Toy Freddy's Nose!" style="position:absolute;left:18%;top:28%;width:50px;height:50px;z-index:25;cursor:pointer;"></div>
+  <img id="ee-jj-desk" src="assets2/sprites/chica.png" alt="JJ Under Desk" style="position:absolute;right:19%;bottom:4%;height:165px;z-index:26;display:none;filter:hue-rotate(285deg) saturate(1.9) brightness(0.75);pointer-events:none;">
+  <img id="ee-shadow-bonnie" src="assets2/sprites/bonnie.png" alt="RWQFSFASXC" style="position:absolute;left:8%;bottom:8%;height:420px;z-index:26;display:none;filter:brightness(0.06) contrast(5.0) drop-shadow(0 0 12px #fff);pointer-events:none;">
+
+  <!-- FNAF 2 EASTER EGGS & 8-BIT DEATH MINIGAMES MODAL -->
+  <div id="fnaf2-ee-modal" style="position:absolute;inset:0;z-index:88;background:rgba(5,6,12,0.96);display:none;flex-direction:column;align-items:center;justify-content:center;padding:18px;font-family:'Share Tech Mono',monospace;">
+    <h2 style="color:#55ccff;font-size:26px;letter-spacing:2px;margin-bottom:8px;">&#x1F95A; FIVE NIGHTS AT ASHI 2 — EASTER EGGS &amp; 8-BIT DEATH MINIGAMES</h2>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;max-width:1020px;width:95%;">
+      <div style="background:#0d121a;border:2px solid #336699;padding:10px;">
+        <div style="color:#ffdd55;font-weight:bold;">1. JJ (Balloon Girl) Under Desk</div>
+        <div style="color:#aaa;font-size:12px;margin:4px 0;">Rare magenta/purple variant of BB Ashi peeking from underneath your Office desk!</div>
+        <button class="tool-pill" style="width:100%;color:#fff;" onclick="triggerFnaf2EE('jj')">&#x1F388; Spawn JJ Under Desk</button>
+      </div>
+      <div style="background:#0d121a;border:2px solid #336699;padding:10px;">
+        <div style="color:#ffdd55;font-weight:bold;">2. Shadow Bonnie (RWQFSFASXC)</div>
+        <div style="color:#aaa;font-size:12px;margin:4px 0;">Pitch-black silhouette standing on the left of your Office. Put on your Mask before it crashes!</div>
+        <button class="tool-pill" style="width:100%;color:#fff;" onclick="triggerFnaf2EE('shadow_bonnie')">&#x1F430; Spawn Shadow Bonnie</button>
+      </div>
+      <div style="background:#0d121a;border:2px solid #336699;padding:10px;">
+        <div style="color:#ffdd55;font-weight:bold;">3. Shadow Freddy &amp; Endo-02</div>
+        <div style="color:#aaa;font-size:12px;margin:4px 0;">Shadow Freddy slumped in Parts &amp; Service (CAM 08) + Endo-02 in Left Vent (CAM 05)!</div>
+        <button class="tool-pill" style="width:100%;color:#fff;" onclick="triggerFnaf2EE('endo')">&#x1F916; Trigger Shadow Freddy / Endo-02</button>
+      </div>
+      <div style="background:#0d121a;border:2px solid #336699;padding:10px;">
+        <div style="color:#ffdd55;font-weight:bold;">4. "SAVE THEM" (8-Bit Minigame)</div>
+        <div style="color:#aaa;font-size:12px;margin:4px 0;">Follow the Puppet through the pizzeria as Withered Freddy Ashi ("S-A-V-E-T-H-E-M — You can't").</div>
+        <button class="tool-pill" style="width:100%;color:#fff;" onclick="playFnaf2DeathMinigame('savethem')">&#x1F579; Play SAVE THEM</button>
+      </div>
+      <div style="background:#0d121a;border:2px solid #336699;padding:10px;">
+        <div style="color:#ffdd55;font-weight:bold;">5. "Give Gifts, Give Life"</div>
+        <div style="color:#aaa;font-size:12px;margin:4px 0;">Play as Puppet Ashi giving presents and animatronic masks to the 4 souls + 5th Golden Freddy frame!</div>
+        <button class="tool-pill" style="width:100%;color:#fff;" onclick="playFnaf2DeathMinigame('givegifts')">&#x1F381; Play Give Gifts, Give Life</button>
+      </div>
+      <div style="background:#0d121a;border:2px solid #336699;padding:10px;">
+        <div style="color:#ffdd55;font-weight:bold;">6. "Take Cake" &amp; "Foxy Go! Go! Go!"</div>
+        <div style="color:#aaa;font-size:12px;margin:4px 0;">Feed cake to the children while the crying child outside becomes the Puppet + Foxy's 3-run curtain sprint!</div>
+        <button class="tool-pill" style="width:100%;color:#fff;" onclick="playFnaf2DeathMinigame('foxygo')">&#x1F98A; Play Foxy Go! Go! Go!</button>
+      </div>
+    </div>
+    <canvas id="fnaf2-mg-canvas" width="720" height="240" style="background:#000;border:2px solid #55ccff;margin-top:10px;display:none;"></canvas>
+    <div style="display:flex;gap:10px;margin-top:10px;">
+      <button class="tool-pill" onclick="triggerFnaf2EE('honk')">&#x1F4EF; Honk Office Poster Nose</button>
+      <button class="tool-pill" style="background:#882222;color:#fff;" onclick="closeFnaf2EasterEggs()">&#x2716; Close</button>
+    </div>
   </div>
 </div>
 
@@ -1918,6 +1974,73 @@ function returnToMenu() {
   document.getElementById('cam-screen').style.display = 'none';
   document.getElementById('title-screen').style.display = 'flex';
   staticCanvas.style.opacity = '0.18';
+}
+
+function openFnaf2EasterEggs() {
+  document.getElementById('fnaf2-ee-modal').style.display = 'flex';
+}
+function closeFnaf2EasterEggs() {
+  document.getElementById('fnaf2-ee-modal').style.display = 'none';
+}
+function triggerFnaf2EE(type) {
+  closeFnaf2EasterEggs();
+  const al = document.getElementById('office-alert');
+  if (type === 'honk') {
+    playSound('bb_hi');
+    if (al) al.textContent = '📯 HONK! You booped Toy Freddy Ashi\'s nose on the Office poster!';
+  } else if (type === 'jj') {
+    playSound('bb_hi');
+    const jj = document.getElementById('ee-jj-desk');
+    jj.style.display = 'block';
+    if (al) al.textContent = '🎈 EASTER EGG: JJ (Balloon Girl Ashi) is peeking out from under your desk!';
+    setTimeout(() => { jj.style.display = 'none'; }, 6000);
+  } else if (type === 'shadow_bonnie') {
+    playSound('hallway_alarm');
+    const sb = document.getElementById('ee-shadow-bonnie');
+    sb.style.display = 'block';
+    if (al) al.textContent = '👻 RWQFSFASXC (Shadow Bonnie Ashi) appeared in your Office! Put on your Mask [D]!';
+    setTimeout(() => { sb.style.display = 'none'; }, 5500);
+  } else if (type === 'endo') {
+    playSound('cam_blip');
+    if (al) al.textContent = '🤖 EASTER EGG: Endo-02 & Shadow Freddy Ashi spotted on the security cameras!';
+  }
+}
+
+function playFnaf2DeathMinigame(mode) {
+  const cvs = document.getElementById('fnaf2-mg-canvas');
+  cvs.style.display = 'block';
+  const ctx = cvs.getContext('2d');
+  let step = 0;
+  const spell = mode === 'savethem' ? 'S - A - V - E - T - H - E - M   ("You can\'t.")'
+    : (mode === 'givegifts' ? 'G - I - V - E   G - I - F - T - S ,   G - I - V - E   L - I - F - E' : 'F O X Y   G O !   G O !   G O !');
+  const iv = setInterval(() => {
+    step++;
+    ctx.fillStyle = '#050508';
+    ctx.fillRect(0, 0, 720, 240);
+    ctx.fillStyle = 'rgba(255,255,255,0.06)';
+    for (let y = 0; y < 240; y += 6) ctx.fillRect(0, y, 720, 2);
+
+    ctx.fillStyle = mode === 'savethem' ? '#995522' : (mode === 'givegifts' ? '#eeeeee' : '#cc3322');
+    ctx.fillRect(80 + step * 38, 110, 44, 64);
+
+    // 4 spirit children + Purple Guy in corner
+    for (let i = 0; i < 4; i++) {
+      ctx.fillStyle = step > i * 2 ? '#ffcc33' : '#778899';
+      ctx.fillRect(360 + i * 70, 120, 36, 52);
+    }
+    ctx.fillStyle = '#8822aa';
+    ctx.fillRect(640, 105, 42, 70);
+
+    ctx.fillStyle = '#ff4444';
+    ctx.font = '18px monospace';
+    ctx.fillText(spell, 40, 42);
+    playSound('cam_blip');
+
+    if (step >= 12) {
+      clearInterval(iv);
+      triggerJumpscare('golden', '8-Bit Death Minigame Ended: ' + spell);
+    }
+  }, 350);
 }
 </script>
 </body>
